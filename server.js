@@ -65,18 +65,32 @@ app.get('/api/curso/:year/:ies', async (req, res) => {
 });
 
 // API CONDIÇÃO DE SALA
-app.get('/api/cond_sala/:year/:ies/:curso', async (req, res) => {
+// http://localhost:3001/api/cond_sala/2022/65435
+app.get('/api/cond_sala/:year/:curso', async (req, res) => {
 
-  if (!req.params.year || !req.params.ies || !req.params.curso) {
-    return res.status(400).json({ error: 'O parâmetro "ano" e "ies" é obrigatório.' });
+  if (!req.params.year || !req.params.curso) {
+    return res.status(400).json({ error: 'O parâmetro "year" e "curso" é obrigatório.' });
   }
 
   try {
-    const { rows } = await pool.query('SELECT DISTINCT COD_CURSO FROM DIM_CURSO CURSO LEFT JOIN DIM_ANO ANO ON ANO.ID = CURSO.ID_ANO WHERE ANO.ANO = $1 AND COD_IES = $2 LIMIT 10', [req.params.year, req.params.ies]);
-    res.json(rows); // Retorna os anos
+    const query = `
+      SELECT A.ANO, C.COD_CURSO, AVAL.COND_SALA, NT.NOTA
+      FROM FATO_NOTAS NT
+      LEFT JOIN DIM_ANO A ON A.ID = NT.ID_ANO
+      LEFT JOIN DIM_CURSO C ON C.ID = NT.ID_CURSO
+      LEFT JOIN DIM_AVAL_CURSO AVAL ON AVAL.ID_CURSO = C.ID
+      WHERE NT.TIPO_PRESENCA = '555'
+        AND C.COD_CURSO = $1
+        AND A.ANO = $2
+      LIMIT 10
+    `;
+    const { rows } = await pool.query(query, [req.params.curso, req.params.year]);
+
+    res.json(rows);
+    
   } catch (error) {
-    console.error('Erro ao buscar curso:', error);
-    res.status(500).json({ error: 'Erro ao buscar curso no banco de dados.' });
+    console.error('Erro ao buscar condição do curso:', error);
+    res.status(500).json({ error: 'Erro ao buscar condição do curso no banco de dados.' });
   }
 });
 
