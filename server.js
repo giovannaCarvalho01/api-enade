@@ -94,6 +94,65 @@ app.get('/api/cond_sala/:year/:curso', async (req, res) => {
   }
 });
 
+function calculatePercentile(arr, percentile) {
+  // Ordena o array de menor para maior
+  arr.sort((a, b) => a - b);
+  
+  // Calcula a posição do percentil no array ordenado
+  const index = (percentile / 100) * (arr.length - 1);
+  
+  // Se o índice for inteiro, retorna o valor no índice
+  if (Number.isInteger(index)) {
+    return arr[index];
+  } else {
+    // Caso contrário, retorna a média entre os dois valores mais próximos
+    const lower = arr[Math.floor(index)];
+    const upper = arr[Math.ceil(index)];
+    return (lower + upper) / 2;
+  }
+}
+
+// http://localhost:3001/api/boxplot/2022/65435
+app.get('/api/boxplot/:ano/:curso', async (req, res) => {
+
+  const { ano, curso } = req.params;
+  
+  // Query SQL para obter os dados das notas
+  const query = `
+    SELECT nota
+    FROM fato_notas f
+    JOIN dim_ano a ON f.id_ano = a.id
+    JOIN dim_curso c ON f.id_curso = c.id
+    WHERE a.ano = $1 AND c.cod_curso = $2 AND f.tipo_presenca = '555'
+  `;
+  
+  try {
+    const result =  await pool.query(query, [ano, curso]);
+    const notas = result.rows.map(row => row.nota);
+
+    // Calcular os quartis, IQR e identificar outliers
+    const Q1 = calculatePercentile(notas, 25);
+    const Q3 = calculatePercentile(notas, 75);
+    const IQR = Q3 - Q1;
+    const lowerFence = Q1 - 1.5 * IQR;
+    const upperFence = Q3 + 1.5 * IQR;
+
+    const outliers = notas.filter(nota => nota < lowerFence || nota > upperFence);
+
+    // Montar a resposta para o boxplot
+    res.json({
+      data: {
+        box: [Q1, Q3, IQR],
+        outliers: outliers,
+      },
+    });
+  } catch (err) {
+    console.error('Error fetching data:', err);
+    res.status(500).send('Erro ao buscar os dados');
+  }
+});
+
+
 
 app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`);
