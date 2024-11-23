@@ -175,8 +175,10 @@ app.get('/api/boxplot/:ano/:curso', async (req, res) => {
   }
 });
 
+app.get("/", (req, res) => res.send("Express on Vercel"));
+
 app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`);
 });
 
-// export default app;
+export default app;
