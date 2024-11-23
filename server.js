@@ -175,8 +175,8 @@ app.get('/api/boxplot/:ano/:curso', async (req, res) => {
   }
 });
 
-// app.listen(PORT, () => {
-//   console.log(`Servidor rodando na porta ${PORT}`);
-// });
+app.listen(PORT, () => {
+  console.log(`Servidor rodando na porta ${PORT}`);
+});
 
-export default app;
+// export default app;
