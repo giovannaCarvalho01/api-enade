@@ -129,7 +129,7 @@ app.get('/api/boxplot/:ano/:curso', async (req, res) => {
       .from('vw_cond_sala') // Consultando a view
       .select('nota')
       .eq('ano', ano) // Filtrando pelo ano
-      .eq('cod_curso', curso) // Filtrando pelo código do curso
+      .eq('cod_curso', curso); // Filtrando pelo código do curso
     
     if (error) throw error;
 
@@ -156,21 +156,23 @@ app.get('/api/boxplot/:ano/:curso', async (req, res) => {
     const median = calculatePercentile(sortedNotas, 50);  // Mediana
     const IQR = Q3 - Q1;
 
-    const min = sortedNotas[0];
-    const max = sortedNotas[sortedNotas.length - 1];
-
-    // Ajustar o cálculo de outliers
+    // Ajustar o cálculo de fences
     const lowerFence = Q1 - 1.5 * IQR;
     const upperFence = Q3 + 1.5 * IQR;
 
-    const outliers = notas.filter(nota => nota < lowerFence || nota > upperFence);
+    // Calcular os limites ajustados para o boxplot
+    const adjustedMin = sortedNotas.find(nota => nota >= lowerFence) || sortedNotas[0];
+    const adjustedMax = sortedNotas.reverse().find(nota => nota <= upperFence) || sortedNotas[sortedNotas.length - 1];
+    
+    // Filtrar os outliers e garantir que sejam únicos
+    const outliers = Array.from(new Set(notas.filter(nota => nota < lowerFence || nota > upperFence)));
 
     console.log('Outliers:', outliers); // Verificar quais notas são identificadas como outliers
 
     res.json({
       data: {
-        box: [min, Q1, median, Q3, max],  // Retorna os 5 valores do boxplot
-        outliers: outliers,               // Retorna os outliers
+        box: [adjustedMin, Q1, median, Q3, adjustedMax],  // Retorna os limites ajustados
+        outliers: outliers,                              // Retorna os outliers
       },
     });
   } catch (error) {
