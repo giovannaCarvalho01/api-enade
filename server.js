@@ -13,7 +13,11 @@ const supabaseUrl = 'https://yonxzkpeawyzeytbnslt.supabase.co';
 const supabaseKey = process.env.SUPABASE_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-app.use(cors());
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE'], // Métodos HTTP permitidos
+  allowedHeaders: ['Content-Type', 'Authorization'], // Cabeçalhos permitidos
+}));
 app.use(express.json());
 
 // API ANO
@@ -114,7 +118,7 @@ app.get('/api/cond_sala/:year/:curso', async (req, res) => {
 });
 
 
-// API BOX PLOT
+// API BOX PLOT - VERIFICAR CURSO 100966
 // http://localhost:3001/api/boxplot/2022/117004
 app.get('/api/boxplot/:ano/:curso', async (req, res) => {
   const { ano, curso } = req.params;
