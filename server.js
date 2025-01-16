@@ -305,6 +305,74 @@ app.get('/notas/download', async (req, res) => {
       res.status(500).send('Erro ao gerar o arquivo Excel');
     }
   });
+
+// ENDPOINT TABLE
+app.get('/notas', async (req, res) => {
+  // Pegando os parâmetros de filtro da query string
+  const { cod_ies, cat_adm, municipio, regiao, uf, grp, ano, presenca } = req.query;
+
+  // Inicia a consulta SQL
+  let query = 'SELECT * FROM vw_curso_notas WHERE 1=1';
+  const params = [];
+
+  // Adicionando filtros à consulta
+  if (cod_ies) {
+      query += ' AND cod_ies = ?';
+      params.push(cod_ies);
+  }
+
+  if (cat_adm) {
+      query += ' AND dsc_cat_adm = ?';
+      params.push(cat_adm);
+  }
+
+  if (municipio) {
+      query += ' AND dsc_municipio = ?';
+      params.push(municipio);
+  }
+
+  if (regiao) {
+      query += ' AND dsc_regiao_completo = ?';
+      params.push(regiao);
+  }
+
+  if (uf) {
+      query += ' AND dsc_uf = ?';
+      params.push(uf);
+  }
+
+  if (grp) {
+      query += ' AND dsc_grp = ?';
+      params.push(grp);
+  }
+
+  if (ano) {
+      query += ' AND ano = ?';
+      params.push(ano);
+  }
+
+  // Filtro para tipo_presenca, se fornecido
+  if (presenca) {
+      query += ' AND tipo_presenca = ?';
+      params.push(presenca);
+  }
+
+  try {
+      // Executa a consulta SQL para pegar os dados
+      const [rows] = await db.query(query, params);
+
+      // Verifica se encontrou registros
+      if (rows.length > 0) {
+          res.status(200).json(rows); // Retorna os dados em formato JSON
+      } else {
+          res.status(404).json({ message: 'Nenhum dado encontrado para os filtros fornecidos' });
+      }
+  } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: 'Erro ao buscar os dados', error: error.message });
+  }
+});
+
     
 // app.post('/dados', async (req, res) => {
 //   const { coluna1, coluna2 } = req.body; // Substitua pelas colunas do seu banco
