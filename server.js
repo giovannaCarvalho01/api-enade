@@ -375,7 +375,7 @@ app.get('/notas', async (req, res) => {
 
 app.get('/LineChart', async (req, res) => {
   // Pegando os parâmetros da query string
-  const { ano, regiao, uf, municipio, catAdm, ies, curso } = req.query;
+  const { regiao, uf, municipio, catAdm, ies, curso, presenca } = req.query;
   
   // Cria a consulta SQL base
   let query = `
@@ -391,9 +391,80 @@ app.get('/LineChart', async (req, res) => {
   const params = [];
 
   // Adicionando condições dinamicamente com base nos filtros fornecidos
+  // if (ano) {
+  //     query += ' AND ano = ?';
+  //     params.push(ano);
+  // }
+  if (regiao) {
+      query += ' AND dsc_regiao_completo = ?';
+      params.push(regiao);
+  }
+  if (uf) {
+      query += ' AND dsc_uf = ?';
+      params.push(uf);
+  }
+  if (municipio) {
+      query += ' AND dsc_municipio = ?';
+      params.push(municipio);
+  }
+  if (catAdm) {
+      query += ' AND dsc_cat_adm = ?';
+      params.push(catAdm);
+  }
+  if (ies) {
+      query += ' AND cod_ies = ?';
+      params.push(ies);
+  }
+  if (curso) {
+      query += ' AND dsc_grp = ?';
+      params.push(curso);
+  }
+
+  // Filtro para tipo_presenca, se fornecido
+  if (presenca) {
+    query += ' AND tipo_presenca = ?';
+    params.push(presenca);
+  }
+
+  // Adicionar agrupamento por ano
+  query += ' GROUP BY ano';
+
+  try {
+      // Executa a consulta no banco de dados
+      const [rows] = await db.query(query, params);
+
+      // Verifica se encontrou registros
+      if (rows.length > 0) {
+          res.status(200).json(rows); // Retorna os dados encontrados
+      } else {
+          res.status(404).json({ message: 'Nenhum dado encontrado para os filtros fornecidos' });
+      }
+  } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: 'Erro ao buscar os dados', error: error.message });
+  }
+});
+
+// Novo endpoint para identificar e remover outliers
+app.get('/boxplot', async (req, res) => {
+
+  const { ano, regiao, uf, municipio, catAdm, ies, curso, presenca } = req.query;
+
+
+  let query = `
+      SELECT 
+          nota_geral 
+      FROM 
+          vw_curso_notas 
+      WHERE 
+          1=1`;
+
+  const params = [];
+
+  // Adicionando condições dinamicamente com base nos filtros fornecidos
   if (ano) {
-      query += ' AND ano = ?';
-      params.push(ano);
+    query += ' AND ano = ?';
+    params.push(ano);
   }
   if (regiao) {
       query += ' AND dsc_regiao_completo = ?';
@@ -420,25 +491,53 @@ app.get('/LineChart', async (req, res) => {
       params.push(curso);
   }
 
-  // Adicionar agrupamento por ano
-  query += ' GROUP BY ano';
+  // Filtro para tipo_presenca, se fornecido
+  if (presenca) {
+    query += ' AND tipo_presenca = ?';
+    params.push(presenca);
+  }
 
   try {
-      // Executa a consulta no banco de dados
-      const [rows] = await db.query(query, params);
+    const [rows] = await db.query(query, params);
+    if (rows.length === 0) {
+      return res.status(404).json({ message: 'Nenhum dado encontrado para os filtros fornecidos' });
+    }
 
-      // Verifica se encontrou registros
-      if (rows.length > 0) {
-          res.status(200).json(rows); // Retorna os dados encontrados
-      } else {
-          res.status(404).json({ message: 'Nenhum dado encontrado para os filtros fornecidos' });
+    const valores = rows.map(row => row.nota_geral);
+
+    // Cálculo do IQR (Interquartile Range)
+    const sortedValues = [...valores].sort((a, b) => a - b);
+    const q1Index = Math.floor((sortedValues.length / 4));
+    const q3Index = Math.floor((sortedValues.length * 3) / 4);
+    const q1 = sortedValues[q1Index];
+    const q3 = sortedValues[q3Index];
+    const iqr = q3 - q1;
+
+    const lowerBound = q1 - 1.5 * iqr;
+    const upperBound = q3 + 1.5 * iqr;
+
+    // Identificar os outliers
+    const outliers = sortedValues.filter(val => {
+      if (typeof val !== 'number' || isNaN(val)) {
+        return false; // Ignorar valores não numéricos
       }
+      return val < lowerBound || val > upperBound;
+    });
+
+    // Filtrar os valores dentro do intervalo aceitável
+    const valoresSemOutliers = sortedValues.filter(val => val >= lowerBound && val <= upperBound);
+
+    // Retornar os resultados
+    res.status(200).json({
+      valores: valoresSemOutliers,
+      outliers,
+      limites: { q1, q3, lowerBound, upperBound }
+    });
   } catch (error) {
-      console.error(error);
-      res.status(500).json({ message: 'Erro ao buscar os dados', error: error.message });
+    console.error(error);
+    res.status(500).json({ message: 'Erro ao buscar os dados', error: error.message });
   }
 });
-
 
 
 // Inicia o servidor
