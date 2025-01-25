@@ -373,17 +373,73 @@ app.get('/notas', async (req, res) => {
   }
 });
 
-    
-// app.post('/dados', async (req, res) => {
-//   const { coluna1, coluna2 } = req.body; // Substitua pelas colunas do seu banco
-//   try {
-//     const result = await db.query('INSERT INTO sua_tabela (coluna1, coluna2) VALUES (?, ?)', [coluna1, coluna2]);
-//     res.status(201).send({ id: result.insertId });
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).send('Erro ao inserir dados no banco de dados');
-//   }
-// });
+app.get('/LineChart', async (req, res) => {
+  // Pegando os parâmetros da query string
+  const { ano, regiao, uf, municipio, catAdm, ies, curso } = req.query;
+  
+  // Cria a consulta SQL base
+  let query = `
+      SELECT 
+          ano, 
+          AVG(nota_geral) AS media_nota_geral 
+      FROM 
+          vw_curso_notas 
+      WHERE 
+          1=1`;
+
+  // Array de parâmetros para consulta
+  const params = [];
+
+  // Adicionando condições dinamicamente com base nos filtros fornecidos
+  if (ano) {
+      query += ' AND ano = ?';
+      params.push(ano);
+  }
+  if (regiao) {
+      query += ' AND dsc_regiao_completo = ?';
+      params.push(regiao);
+  }
+  if (uf) {
+      query += ' AND dsc_uf = ?';
+      params.push(uf);
+  }
+  if (municipio) {
+      query += ' AND dsc_municipio = ?';
+      params.push(municipio);
+  }
+  if (catAdm) {
+      query += ' AND dsc_cat_adm = ?';
+      params.push(catAdm);
+  }
+  if (ies) {
+      query += ' AND cod_ies = ?';
+      params.push(ies);
+  }
+  if (curso) {
+      query += ' AND dsc_grp = ?';
+      params.push(curso);
+  }
+
+  // Adicionar agrupamento por ano
+  query += ' GROUP BY ano';
+
+  try {
+      // Executa a consulta no banco de dados
+      const [rows] = await db.query(query, params);
+
+      // Verifica se encontrou registros
+      if (rows.length > 0) {
+          res.status(200).json(rows); // Retorna os dados encontrados
+      } else {
+          res.status(404).json({ message: 'Nenhum dado encontrado para os filtros fornecidos' });
+      }
+  } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: 'Erro ao buscar os dados', error: error.message });
+  }
+});
+
+
 
 // Inicia o servidor
 app.listen(PORT, () => {
