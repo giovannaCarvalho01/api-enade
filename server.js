@@ -457,7 +457,7 @@ app.get('/boxplot', async (req, res) => {
       FROM 
           vw_curso_notas 
       WHERE 
-          1=1`;
+          tipo_presenca = '555' AND 1=1`;
 
   const params = [];
 
@@ -533,6 +533,119 @@ app.get('/boxplot', async (req, res) => {
       outliers,
       limites: { q1, q3, lowerBound, upperBound }
     });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Erro ao buscar os dados', error: error.message });
+  }
+});
+
+app.get('/graficos', async (req, res) => {
+  const { ano, regiao, uf, municipio, catAdm, ies, curso, presenca, variavel } = req.query;
+
+  console.log(req.query);
+
+  if (!variavel) {
+    return res.status(400).json({ message: 'O parâmetro "variavel" é obrigatório' });
+  }
+
+  let query = `
+    SELECT 
+        ${variavel} AS variavel, 
+        COUNT(*) AS quantidade, 
+        COUNT(*) * 100.0 / (
+            SELECT COUNT(*) 
+            FROM vw_curso_notas 
+            WHERE tipo_presenca = '555' AND 1=1`;
+
+  const params = [];
+
+  // Filtros para o subquery (total)
+  if (ano) {
+    query += ' AND ano = ?';
+    params.push(ano);
+  }
+  if (regiao) {
+    query += ' AND dsc_regiao_completo = ?';
+    params.push(regiao);
+  }
+  if (uf) {
+    query += ' AND dsc_uf = ?';
+    params.push(uf);
+  }
+  if (municipio) {
+    query += ' AND dsc_municipio = ?';
+    params.push(municipio);
+  }
+  if (catAdm) {
+    query += ' AND dsc_cat_adm = ?';
+    params.push(catAdm);
+  }
+  if (ies) {
+    query += ' AND cod_ies = ?';
+    params.push(ies);
+  }
+  if (curso) {
+    query += ' AND dsc_grp = ?';
+    params.push(curso);
+  }
+  if (presenca) {
+    query += ' AND tipo_presenca = ?';
+    params.push(presenca);
+  }
+
+  query += `
+        ) AS percentual 
+    FROM vw_curso_notas 
+    WHERE 1=1`;
+
+  // Filtros para a query principal
+  if (ano) {
+    query += ' AND ano = ?';
+    params.push(ano);
+  }
+  if (regiao) {
+    query += ' AND dsc_regiao_completo = ?';
+    params.push(regiao);
+  }
+  if (uf) {
+    query += ' AND dsc_uf = ?';
+    params.push(uf);
+  }
+  if (municipio) {
+    query += ' AND dsc_municipio = ?';
+    params.push(municipio);
+  }
+  if (catAdm) {
+    query += ' AND dsc_cat_adm = ?';
+    params.push(catAdm);
+  }
+  if (ies) {
+    query += ' AND cod_ies = ?';
+    params.push(ies);
+  }
+  if (curso) {
+    query += ' AND dsc_grp = ?';
+    params.push(curso);
+  }
+  if (presenca) {
+    query += ' AND tipo_presenca = ?';
+    params.push(presenca);
+  }
+
+  query += `
+    GROUP BY ${variavel};
+  `;
+  
+  console.log(query);
+
+  try {
+    const [rows] = await db.query(query, params);
+
+    if (rows.length === 0) {
+      return res.status(404).json({ message: 'Nenhum dado encontrado para os filtros fornecidos' });
+    }
+
+    res.status(200).json(rows);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Erro ao buscar os dados', error: error.message });
