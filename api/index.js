@@ -37,7 +37,7 @@ app.get('/anos', async (req, res) => {
     res.json(rows);
   } catch (error) {
     console.error(error);
-    res.status(500).send('Erro ao buscar dados do banco de dados');
+    res.status(500).send(error);
   }
 });
 
