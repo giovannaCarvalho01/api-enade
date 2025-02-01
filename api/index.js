@@ -48,7 +48,7 @@ app.get('/regiao/:ano', async (req, res) => {
     
     try {
       // Consulta SQL com parâmetro 'ano' na cláusula WHERE
-      const [rows] = await db.query('SELECT DISTINCT dsc_regiao_completo FROM vw_curso_completo WHERE ano = ?', [ano]);
+      const [rows] = await db.query('SELECT DISTINCT dsc_regiao_completo FROM curso_notas WHERE ano = ?', [ano]);
       
       res.json(rows);
     } catch (error) {
@@ -57,111 +57,18 @@ app.get('/regiao/:ano', async (req, res) => {
     }
 });
   
-
-// Rota GET UF com parâmetro 'ano' e 'regiao'
-app.get('/uf/:ano/:regiao', async (req, res) => {
-    const ano = req.params.ano; // Obtém o valor do parâmetro 'ano' na URL
-    const regiao = req.params.regiao; // Obtém o valor do parâmetro 'ano' na URL
-    
-    try {
-      // Consulta SQL com parâmetro 'ano' na cláusula WHERE
-      const [rows] = await db.query('SELECT DISTINCT dsc_uf FROM vw_curso_completo WHERE ano = ? AND dsc_regiao_completo = ?', [ano, regiao]);
-      
-      res.json(rows);
-    } catch (error) {
-      console.error(error);
-      res.status(500).send('Erro ao buscar dados do banco de dados');
-    }
-});
-
-// Rota GET Municipio com parâmetro 'ano' e 'regiao' e 'uf'
-app.get('/municipio/:ano/:regiao/:uf', async (req, res) => {
-    const ano = req.params.ano; // Obtém o valor do parâmetro 'ano' na URL
-    const regiao = req.params.regiao; // Obtém o valor do parâmetro 'regiao' na URL
-    const uf = req.params.uf; // Obtém o valor do parâmetro 'uf' na URL
-    
-    try {
-      // Consulta SQL com parâmetro 'ano' na cláusula WHERE
-      const [rows] = await db.query('SELECT DISTINCT dsc_municipio FROM vw_curso_completo WHERE ano = ? AND dsc_regiao_completo = ? AND dsc_uf = ?', [ano, regiao, uf]);
-      
-      res.json(rows);
-    } catch (error) {
-      console.error(error);
-      res.status(500).send('Erro ao buscar dados do banco de dados');
-    }
-});
-
-// Rota GET Categoria administrativa com parâmetro 'ano' e 'regiao' e 'uf'
-app.get('/cat_adm/:ano/:regiao/:uf/:municipio', async (req, res) => {
-    const ano = req.params.ano; // Obtém o valor do parâmetro 'ano' na URL
-    const regiao = req.params.regiao; // Obtém o valor do parâmetro 'regiao' na URL
-    const uf = req.params.uf; // Obtém o valor do parâmetro 'uf' na URL
-    const municipio = req.params.municipio; // Obtém o valor do parâmetro 'uf' na URL
-    
-    try {
-      // Consulta SQL com parâmetro 'ano' na cláusula WHERE
-      const [rows] = await db.query('SELECT DISTINCT dsc_cat_adm FROM vw_curso_completo WHERE ano = ? AND dsc_regiao_completo = ? AND dsc_uf = ? AND dsc_municipio = ?', [ano, regiao, uf, municipio]);
-      
-      res.json(rows);
-    } catch (error) {
-      console.error(error);
-      res.status(500).send('Erro ao buscar dados do banco de dados');
-    }
-});
-
-// Rota GET IES administrativa com parâmetro 'ano' e 'regiao' e 'uf', 'MUNICIPIO' e cattegoria adm
-app.get('/ies/:ano/:regiao/:uf/:municipio/:cat_adm', async (req, res) => {
-    const ano = req.params.ano; // Obtém o valor do parâmetro 'ano' na URL
-    const regiao = req.params.regiao; // Obtém o valor do parâmetro 'regiao' na URL
-    const uf = req.params.uf; // Obtém o valor do parâmetro 'uf' na URL
-    const municipio = req.params.municipio; // Obtém o valor do parâmetro 'uf' na URL
-    const cat_adm = req.params.cat_adm; // Obtém o valor do parâmetro 'uf' na URL
-    
-    try {
-      // Consulta SQL com parâmetro 'ano' na cláusula WHERE
-      const [rows] = await db.query('SELECT DISTINCT cod_ies FROM vw_curso_completo WHERE ano = ? AND dsc_regiao_completo = ? AND dsc_uf = ? AND dsc_municipio = ? AND dsc_cat_adm = ?', [ano, regiao, uf, municipio, cat_adm]);
-      
-      res.json(rows);
-    } catch (error) {
-      console.error(error);
-      res.status(500).send('Erro ao buscar dados do banco de dados');
-    }
-});
-
-// Rota GET Grupo com parâmetro 'ano' e 'regiao' e 'uf', 'municipio' e 'categoria adm'
-app.get('/grupo/:ano/:regiao/:uf/:municipio/:cat_adm/:cod_ies', async (req, res) => {
-    const ano = req.params.ano; // Obtém o valor do parâmetro 'ano' na URL
-    const regiao = req.params.regiao; // Obtém o valor do parâmetro 'regiao' na URL
-    const uf = req.params.uf; // Obtém o valor do parâmetro 'uf' na URL
-    const municipio = req.params.municipio; // Obtém o valor do parâmetro 'uf' na URL
-    const cat_adm = req.params.cat_adm; // Obtém o valor do parâmetro 'uf' na URL
-    const cod_ies = req.params.cod_ies; // Obtém o valor do parâmetro 'uf' na URL
-    
-    try {
-      // Consulta SQL com parâmetro 'ano' na cláusula WHERE
-      const [rows] = await db.query('SELECT DISTINCT dsc_grp FROM vw_curso_completo WHERE ano = ? AND dsc_regiao_completo = ? AND dsc_uf = ? AND dsc_municipio = ? AND dsc_cat_adm = ? AND cod_ies = ?', [ano, regiao, uf, municipio, cat_adm, cod_ies]);
-      
-      res.json(rows);
-    } catch (error) {
-      console.error(error);
-      res.status(500).send('Erro ao buscar dados do banco de dados');
-    }
-});
-
-
 // FILTER
-
 app.get('/filter', async (req, res) => {
     // Desestruturando os parâmetros da query string
     const { cod_ies, cat_adm, municipio, regiao, uf, grp, ano, coluna } = req.query;
   
     // Definindo as colunas permitidas para evitar injeção de SQL
     const colunasPermitidas = [
-      'dsc_regiao_completo',
+      'dsc_regiao',
       'dsc_cat_adm',
       'dsc_municipio',
       'dsc_uf',
-      'dsc_grp',
+      'dsc_grupo',
       'cod_ies',
       'ano'
     ];
@@ -170,7 +77,7 @@ app.get('/filter', async (req, res) => {
     const colunaSelecionada = colunasPermitidas.includes(coluna) ? coluna : 'dsc_regiao_completo';
   
     // Inicia a consulta SQL base
-    let query = `SELECT DISTINCT ${colunaSelecionada} FROM vw_curso_completo WHERE 1=1`;  // Usa a coluna selecionada
+    let query = `SELECT DISTINCT ${colunaSelecionada} FROM curso_notas WHERE cod_tipo_presenca = '555' AND 1=1`;  // Usa a coluna selecionada
   
     // Array para armazenar os parâmetros da consulta
     const params = [];
@@ -192,7 +99,7 @@ app.get('/filter', async (req, res) => {
     }
   
     if (regiao) {
-      query += ' AND dsc_regiao_completo = ?';
+      query += ' AND dsc_regiao = ?';
       params.push(regiao);
     }
   
@@ -202,7 +109,7 @@ app.get('/filter', async (req, res) => {
     }
   
     if (grp) {
-      query += ' AND dsc_grp = ?';
+      query += ' AND dsc_grupo = ?';
       params.push(grp);
     }
   
@@ -227,7 +134,7 @@ app.get('/notas/download', async (req, res) => {
     const { cod_ies, cat_adm, municipio, regiao, uf, grp, ano, presenca } = req.query;
   
     // Inicia a consulta SQL
-    let query = 'SELECT * FROM vw_curso_notas WHERE 1=1';
+    let query = 'SELECT * FROM curso_notas WHERE 1=1';
     const params = [];
   
     // Adicionando filtros à consulta
@@ -247,7 +154,7 @@ app.get('/notas/download', async (req, res) => {
     }
   
     if (regiao) {
-      query += ' AND dsc_regiao_completo = ?';
+      query += ' AND dsc_regiao = ?';
       params.push(regiao);
     }
   
@@ -257,7 +164,7 @@ app.get('/notas/download', async (req, res) => {
     }
   
     if (grp) {
-      query += ' AND dsc_grp = ?';
+      query += ' AND dsc_grupo = ?';
       params.push(grp);
     }
   
@@ -268,7 +175,7 @@ app.get('/notas/download', async (req, res) => {
   
     // Filtro para tipo_presenca, se fornecido
     if (presenca) {
-      query += ' AND tipo_presenca = ?';
+      query += ' AND cod_tipo_presenca = ?';
       params.push(presenca);
     }
   
@@ -315,7 +222,7 @@ app.get('/notas', async (req, res) => {
   const { cod_ies, cat_adm, municipio, regiao, uf, grp, ano, presenca } = req.query;
 
   // Inicia a consulta SQL
-  let query = 'SELECT * FROM vw_curso_notas WHERE 1=1';
+  let query = `SELECT * FROM curso_notas WHERE 1=1`;
   const params = [];
 
   // Adicionando filtros à consulta
@@ -335,7 +242,7 @@ app.get('/notas', async (req, res) => {
   }
 
   if (regiao) {
-      query += ' AND dsc_regiao_completo = ?';
+      query += ' AND dsc_regiao = ?';
       params.push(regiao);
   }
 
@@ -345,7 +252,7 @@ app.get('/notas', async (req, res) => {
   }
 
   if (grp) {
-      query += ' AND dsc_grp = ?';
+      query += ' AND dsc_grupo = ?';
       params.push(grp);
   }
 
@@ -356,7 +263,7 @@ app.get('/notas', async (req, res) => {
 
   // Filtro para tipo_presenca, se fornecido
   if (presenca) {
-      query += ' AND tipo_presenca = ?';
+      query += ' AND cod_tipo_presenca = ?';
       params.push(presenca);
   }
 
@@ -386,7 +293,7 @@ app.get('/LineChart', async (req, res) => {
           ano, 
           AVG(nota_geral) AS media_nota_geral 
       FROM 
-          vw_curso_notas 
+          curso_notas 
       WHERE 
           1=1`;
 
@@ -399,7 +306,7 @@ app.get('/LineChart', async (req, res) => {
   //     params.push(ano);
   // }
   if (regiao) {
-      query += ' AND dsc_regiao_completo = ?';
+      query += ' AND dsc_regiao = ?';
       params.push(regiao);
   }
   if (uf) {
@@ -419,13 +326,13 @@ app.get('/LineChart', async (req, res) => {
       params.push(ies);
   }
   if (curso) {
-      query += ' AND dsc_grp = ?';
+      query += ' AND dsc_grupo = ?';
       params.push(curso);
   }
 
   // Filtro para tipo_presenca, se fornecido
   if (presenca) {
-    query += ' AND tipo_presenca = ?';
+    query += ' AND cod_tipo_presenca = ?';
     params.push(presenca);
   }
 
@@ -458,9 +365,9 @@ app.get('/boxplot', async (req, res) => {
       SELECT 
           nota_geral 
       FROM 
-          vw_curso_notas 
+          curso_notas 
       WHERE 
-          tipo_presenca = '555' AND 1=1`;
+          cod_tipo_presenca = '555' AND 1=1`;
 
   const params = [];
 
@@ -470,7 +377,7 @@ app.get('/boxplot', async (req, res) => {
     params.push(ano);
   }
   if (regiao) {
-      query += ' AND dsc_regiao_completo = ?';
+      query += ' AND dsc_regiao = ?';
       params.push(regiao);
   }
   if (uf) {
@@ -490,13 +397,13 @@ app.get('/boxplot', async (req, res) => {
       params.push(ies);
   }
   if (curso) {
-      query += ' AND dsc_grp = ?';
+      query += ' AND dsc_grupo = ?';
       params.push(curso);
   }
 
   // Filtro para tipo_presenca, se fornecido
   if (presenca) {
-    query += ' AND tipo_presenca = ?';
+    query += ' AND cod_tipo_presenca = ?';
     params.push(presenca);
   }
 
@@ -557,8 +464,8 @@ app.get('/graficos', async (req, res) => {
         COUNT(*) AS quantidade, 
         COUNT(*) * 100.0 / (
             SELECT COUNT(*) 
-            FROM vw_curso_notas 
-            WHERE tipo_presenca = '555' AND 1=1`;
+            FROM curso_notas 
+            WHERE cod_tipo_presenca = '555' AND 1=1`;
 
   const params = [];
 
@@ -568,7 +475,7 @@ app.get('/graficos', async (req, res) => {
     params.push(ano);
   }
   if (regiao) {
-    query += ' AND dsc_regiao_completo = ?';
+    query += ' AND dsc_regiao = ?';
     params.push(regiao);
   }
   if (uf) {
@@ -588,17 +495,17 @@ app.get('/graficos', async (req, res) => {
     params.push(ies);
   }
   if (curso) {
-    query += ' AND dsc_grp = ?';
+    query += ' AND dsc_grupo = ?';
     params.push(curso);
   }
   if (presenca) {
-    query += ' AND tipo_presenca = ?';
+    query += ' AND cod_tipo_presenca = ?';
     params.push(presenca);
   }
 
   query += `
         ) AS percentual 
-    FROM vw_curso_notas 
+    FROM curso_notas 
     WHERE 1=1`;
 
   // Filtros para a query principal
@@ -607,7 +514,7 @@ app.get('/graficos', async (req, res) => {
     params.push(ano);
   }
   if (regiao) {
-    query += ' AND dsc_regiao_completo = ?';
+    query += ' AND dsc_regiao = ?';
     params.push(regiao);
   }
   if (uf) {
@@ -627,11 +534,11 @@ app.get('/graficos', async (req, res) => {
     params.push(ies);
   }
   if (curso) {
-    query += ' AND dsc_grp = ?';
+    query += ' AND dsc_grupo = ?';
     params.push(curso);
   }
   if (presenca) {
-    query += ' AND tipo_presenca = ?';
+    query += ' AND cod_tipo_presenca = ?';
     params.push(presenca);
   }
 
@@ -654,7 +561,6 @@ app.get('/graficos', async (req, res) => {
     res.status(500).json({ message: 'Erro ao buscar os dados', error: error.message });
   }
 });
-
 
 // Inicia o servidor
 app.listen(PORT, () => {

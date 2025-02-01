@@ -628,7 +628,7 @@ app.get('/graficos', async (req, res) => {
     params.push(curso);
   }
   if (presenca) {
-    query += ' AND tipo_presenca = ?';
+    query += ' AND cod_tipo_presenca = ?';
     params.push(presenca);
   }
 
