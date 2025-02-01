@@ -31,7 +31,7 @@ const db = await mysql.createPool({
 // Rota GET Ano
 app.get('/anos', async (req, res) => {
   try {
-    const [rows] = await db.query('SELECT DISTINCT ano FROM vw_curso_completo'); // Substitua 'sua_tabela' pelo nome da sua tabela
+    const [rows] = await db.query('SELECT DISTINCT ano FROM curso_notas'); // Substitua 'sua_tabela' pelo nome da sua tabela
     res.json(rows);
   } catch (error) {
     console.error(error);
@@ -45,7 +45,7 @@ app.get('/regiao/:ano', async (req, res) => {
     
     try {
       // Consulta SQL com parâmetro 'ano' na cláusula WHERE
-      const [rows] = await db.query('SELECT DISTINCT dsc_regiao_completo FROM vw_curso_completo WHERE ano = ?', [ano]);
+      const [rows] = await db.query('SELECT DISTINCT dsc_regiao_completo FROM curso_notas WHERE ano = ?', [ano]);
       
       res.json(rows);
     } catch (error) {
@@ -154,11 +154,11 @@ app.get('/filter', async (req, res) => {
   
     // Definindo as colunas permitidas para evitar injeção de SQL
     const colunasPermitidas = [
-      'dsc_regiao_completo',
+      'dsc_regiao',
       'dsc_cat_adm',
       'dsc_municipio',
       'dsc_uf',
-      'dsc_grp',
+      'dsc_grupo',
       'cod_ies',
       'ano'
     ];
@@ -167,7 +167,7 @@ app.get('/filter', async (req, res) => {
     const colunaSelecionada = colunasPermitidas.includes(coluna) ? coluna : 'dsc_regiao_completo';
   
     // Inicia a consulta SQL base
-    let query = `SELECT DISTINCT ${colunaSelecionada} FROM vw_curso_completo WHERE 1=1`;  // Usa a coluna selecionada
+    let query = `SELECT DISTINCT ${colunaSelecionada} FROM curso_notas WHERE cod_tipo_presenca = '555' AND 1=1`;  // Usa a coluna selecionada
   
     // Array para armazenar os parâmetros da consulta
     const params = [];
@@ -189,7 +189,7 @@ app.get('/filter', async (req, res) => {
     }
   
     if (regiao) {
-      query += ' AND dsc_regiao_completo = ?';
+      query += ' AND dsc_regiao = ?';
       params.push(regiao);
     }
   
@@ -199,7 +199,7 @@ app.get('/filter', async (req, res) => {
     }
   
     if (grp) {
-      query += ' AND dsc_grp = ?';
+      query += ' AND dsc_grupo = ?';
       params.push(grp);
     }
   
@@ -224,7 +224,7 @@ app.get('/notas/download', async (req, res) => {
     const { cod_ies, cat_adm, municipio, regiao, uf, grp, ano, presenca } = req.query;
   
     // Inicia a consulta SQL
-    let query = 'SELECT * FROM vw_curso_notas WHERE 1=1';
+    let query = 'SELECT * FROM curso_notas WHERE 1=1';
     const params = [];
   
     // Adicionando filtros à consulta
@@ -244,7 +244,7 @@ app.get('/notas/download', async (req, res) => {
     }
   
     if (regiao) {
-      query += ' AND dsc_regiao_completo = ?';
+      query += ' AND dsc_regiao = ?';
       params.push(regiao);
     }
   
@@ -254,7 +254,7 @@ app.get('/notas/download', async (req, res) => {
     }
   
     if (grp) {
-      query += ' AND dsc_grp = ?';
+      query += ' AND dsc_grupo = ?';
       params.push(grp);
     }
   
@@ -265,7 +265,7 @@ app.get('/notas/download', async (req, res) => {
   
     // Filtro para tipo_presenca, se fornecido
     if (presenca) {
-      query += ' AND tipo_presenca = ?';
+      query += ' AND cod_tipo_presenca = ?';
       params.push(presenca);
     }
   
@@ -312,7 +312,7 @@ app.get('/notas', async (req, res) => {
   const { cod_ies, cat_adm, municipio, regiao, uf, grp, ano, presenca } = req.query;
 
   // Inicia a consulta SQL
-  let query = 'SELECT * FROM vw_curso_notas WHERE 1=1';
+  let query = `SELECT * FROM curso_notas WHERE 1=1`;
   const params = [];
 
   // Adicionando filtros à consulta
@@ -332,7 +332,7 @@ app.get('/notas', async (req, res) => {
   }
 
   if (regiao) {
-      query += ' AND dsc_regiao_completo = ?';
+      query += ' AND dsc_regiao = ?';
       params.push(regiao);
   }
 
@@ -342,7 +342,7 @@ app.get('/notas', async (req, res) => {
   }
 
   if (grp) {
-      query += ' AND dsc_grp = ?';
+      query += ' AND dsc_grupo = ?';
       params.push(grp);
   }
 
@@ -353,7 +353,7 @@ app.get('/notas', async (req, res) => {
 
   // Filtro para tipo_presenca, se fornecido
   if (presenca) {
-      query += ' AND tipo_presenca = ?';
+      query += ' AND cod_tipo_presenca = ?';
       params.push(presenca);
   }
 
@@ -383,7 +383,7 @@ app.get('/LineChart', async (req, res) => {
           ano, 
           AVG(nota_geral) AS media_nota_geral 
       FROM 
-          vw_curso_notas 
+          curso_notas 
       WHERE 
           1=1`;
 
@@ -396,7 +396,7 @@ app.get('/LineChart', async (req, res) => {
   //     params.push(ano);
   // }
   if (regiao) {
-      query += ' AND dsc_regiao_completo = ?';
+      query += ' AND dsc_regiao = ?';
       params.push(regiao);
   }
   if (uf) {
@@ -416,13 +416,13 @@ app.get('/LineChart', async (req, res) => {
       params.push(ies);
   }
   if (curso) {
-      query += ' AND dsc_grp = ?';
+      query += ' AND dsc_grupo = ?';
       params.push(curso);
   }
 
   // Filtro para tipo_presenca, se fornecido
   if (presenca) {
-    query += ' AND tipo_presenca = ?';
+    query += ' AND cod_tipo_presenca = ?';
     params.push(presenca);
   }
 
@@ -455,9 +455,9 @@ app.get('/boxplot', async (req, res) => {
       SELECT 
           nota_geral 
       FROM 
-          vw_curso_notas 
+          curso_notas 
       WHERE 
-          tipo_presenca = '555' AND 1=1`;
+          cod_tipo_presenca = '555' AND 1=1`;
 
   const params = [];
 
@@ -467,7 +467,7 @@ app.get('/boxplot', async (req, res) => {
     params.push(ano);
   }
   if (regiao) {
-      query += ' AND dsc_regiao_completo = ?';
+      query += ' AND dsc_regiao = ?';
       params.push(regiao);
   }
   if (uf) {
@@ -487,13 +487,13 @@ app.get('/boxplot', async (req, res) => {
       params.push(ies);
   }
   if (curso) {
-      query += ' AND dsc_grp = ?';
+      query += ' AND dsc_grupo = ?';
       params.push(curso);
   }
 
   // Filtro para tipo_presenca, se fornecido
   if (presenca) {
-    query += ' AND tipo_presenca = ?';
+    query += ' AND cod_tipo_presenca = ?';
     params.push(presenca);
   }
 
@@ -554,8 +554,8 @@ app.get('/graficos', async (req, res) => {
         COUNT(*) AS quantidade, 
         COUNT(*) * 100.0 / (
             SELECT COUNT(*) 
-            FROM vw_curso_notas 
-            WHERE tipo_presenca = '555' AND 1=1`;
+            FROM curso_notas 
+            WHERE cod_tipo_presenca = '555' AND 1=1`;
 
   const params = [];
 
@@ -565,7 +565,7 @@ app.get('/graficos', async (req, res) => {
     params.push(ano);
   }
   if (regiao) {
-    query += ' AND dsc_regiao_completo = ?';
+    query += ' AND dsc_regiao = ?';
     params.push(regiao);
   }
   if (uf) {
@@ -585,17 +585,17 @@ app.get('/graficos', async (req, res) => {
     params.push(ies);
   }
   if (curso) {
-    query += ' AND dsc_grp = ?';
+    query += ' AND dsc_grupo = ?';
     params.push(curso);
   }
   if (presenca) {
-    query += ' AND tipo_presenca = ?';
+    query += ' AND cod_tipo_presenca = ?';
     params.push(presenca);
   }
 
   query += `
         ) AS percentual 
-    FROM vw_curso_notas 
+    FROM curso_notas 
     WHERE 1=1`;
 
   // Filtros para a query principal
@@ -604,7 +604,7 @@ app.get('/graficos', async (req, res) => {
     params.push(ano);
   }
   if (regiao) {
-    query += ' AND dsc_regiao_completo = ?';
+    query += ' AND dsc_regiao = ?';
     params.push(regiao);
   }
   if (uf) {
@@ -624,7 +624,7 @@ app.get('/graficos', async (req, res) => {
     params.push(ies);
   }
   if (curso) {
-    query += ' AND dsc_grp = ?';
+    query += ' AND dsc_grupo = ?';
     params.push(curso);
   }
   if (presenca) {
