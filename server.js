@@ -927,9 +927,13 @@ app.get('/quiquadrado', async (req, res) => {
           v.ALTO || 0
       ]);
 
-      const tabelaContingenciaArrayFiltrada = tabelaContingenciaArray.filter(row => row.some(val => val > 0));
+      // Filtragem das colunas (não células) com todos os valores zero
+      const tabelaContingenciaArrayFiltrada = tabelaContingenciaArray[0].map((_, colIndex) => {
+          return tabelaContingenciaArray.map(row => row[colIndex]);
+      }).filter(col => col.some(val => val > 0));  // Filtrando colunas com todos os valores zero
 
-      if (tabelaContingenciaArrayFiltrada.length < 2) {
+      // Se todas as colunas foram removidas, retornamos um erro
+      if (tabelaContingenciaArrayFiltrada.length === 0) {
           return res.status(400).json({ message: "Não há dados suficientes para realizar o teste qui-quadrado." });
       }
 
@@ -951,6 +955,9 @@ app.get('/quiquadrado', async (req, res) => {
       res.status(500).json({ message: 'Erro ao processar a requisição' });
   }
 });
+
+
+
 
 
 // Inicia o servidor
