@@ -946,6 +946,7 @@ app.get('/quiquadrado', async (req, res) => {
           valor_p: parseFloat(pValue.toFixed(2)),
           graus_de_liberdade: dof,
           frequencias_esperadas: expected,
+          frequencias_observadas: tabelaContingenciaArrayFiltrada,
           resultado_significativo: resultadoSignificativo
       };
 
