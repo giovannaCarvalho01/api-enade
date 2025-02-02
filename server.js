@@ -846,7 +846,7 @@ app.get('/quiquadrado', async (req, res) => {
       return res.status(400).json({ message: 'O parâmetro "variavel" é obrigatório' });
   }
 
-  const colunasValidas = ['sexo', 'raca', 'plano_ensino'];
+  const colunasValidas = ['sexo', 'raca', 'cond_sala', 'plano_ensino'];
   if (!colunasValidas.includes(variavel)) {
       return res.status(400).json({ message: `A coluna '${variavel}' não é válida. Escolha entre: ${colunasValidas.join(', ')}` });
   }
