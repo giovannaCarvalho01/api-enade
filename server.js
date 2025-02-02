@@ -770,7 +770,8 @@ function findOutliers(data) {
   return { valoresSemOutliers, outliers };
 }
 
-// Função para calcular o teste qui-quadrado de contingência
+
+// Função para calcular o teste qui-quadrado de contingência com regra para Fisher
 function chiSquareContingency(observed) {
     // Calcular totais das linhas e colunas
     const rowTotals = observed.map(row => row.reduce((sum, val) => sum + val, 0));
@@ -781,6 +782,32 @@ function chiSquareContingency(observed) {
     const expected = observed.map((row, rowIndex) =>
         row.map((_, colIndex) => (rowTotals[rowIndex] * colTotals[colIndex]) / total)
     );
+
+    // Verificar se é uma tabela 2x2 e se há valores esperados menores que 5
+    if (observed.length === 2 && observed[0].length === 2) {
+        let hasSmallExpected = false;
+        for (let i = 0; i < expected.length; i++) {
+            for (let j = 0; j < expected[i].length; j++) {
+                if (expected[i][j] < 5) {
+                    hasSmallExpected = true;
+                    break;
+                }
+            }
+            if (hasSmallExpected) break;
+        }
+
+        if (hasSmallExpected) {
+            // Usar Fisher se for 2x2 e tiver valor esperado menor que 5
+            const [a, b] = observed[0];
+            const [c, d] = observed[1];
+            const fisherPValue = fisherExactTestPValue(a, b, c, d);
+            return {
+                method: "Fisher Exact Test",
+                pValue: fisherPValue,
+                expected
+            };
+        }
+    }
 
     // Calcular a estatística qui-quadrado
     let chi2 = 0;
@@ -798,18 +825,71 @@ function chiSquareContingency(observed) {
     // Calcular o valor-p usando a CDF da distribuição qui-quadrado
     const pValue = 1 - jstat.chisquare.cdf(chi2, dof);
 
-    return { chi2, pValue, dof, expected };
+    return {
+        method: "Chi-Square Test",
+        chi2,
+        pValue,
+        dof,
+        expected
+    };
 }
 
-// Endpoint para análise qui-quadrado
+// Função para calcular fatoriais
+function factorial(n) {
+    if (n === 0 || n === 1) return 1;
+    let result = 1;
+    for (let i = 2; i <= n; i++) {
+        result *= i;
+    }
+    return result;
+}
+
+// Função para calcular a probabilidade de uma tabela no Teste de Fisher
+function fisherExactTest(a, b, c, d) {
+    const total = a + b + c + d;
+    const prob =
+        (factorial(a + b) * factorial(c + d) * factorial(a + c) * factorial(b + d)) /
+        (factorial(a) * factorial(b) * factorial(c) * factorial(d) * factorial(total));
+    return prob;
+}
+
+// Função para calcular o p-valor do Teste de Fisher
+function fisherExactTestPValue(a, b, c, d) {
+    const row1 = a + b;
+    const row2 = c + d;
+    const col1 = a + c;
+    const col2 = b + d;
+    const total = row1 + row2;
+
+    let pObserved = fisherExactTest(a, b, c, d);
+    let pValue = 0;
+
+    for (let x = 0; x <= Math.min(row1, col1); x++) {
+        const y = row1 - x;
+        const z = col1 - x;
+        const w = row2 - z;
+
+        if (w >= 0 && y >= 0 && z >= 0) {
+            const p = fisherExactTest(x, y, z, w);
+            if (p <= pObserved) {
+                pValue += p;
+            }
+        }
+    }
+
+    return pValue;
+}
+
+
+
 app.get('/quiquadrado', async (req, res) => {
-  const { ano, regiao, uf, municipio, catAdm, ies, curso, presenca, variavel, alfa = 0.05 } = req.query;
+  const { ano, regiao, uf, municipio, catAdm, ies, curso, presenca, variavel, alfa } = req.query;
 
   if (!variavel) {
       return res.status(400).json({ message: 'O parâmetro "variavel" é obrigatório' });
   }
 
-  const colunasValidas = ['sexo', 'nota_geral', 'outro_nome_de_coluna'];
+  const colunasValidas = ['sexo', 'nota_geral', 'raca'];
   if (!colunasValidas.includes(variavel)) {
       return res.status(400).json({ message: `A coluna '${variavel}' não é válida. Escolha entre: ${colunasValidas.join(', ')}` });
   }
@@ -820,11 +900,11 @@ app.get('/quiquadrado', async (req, res) => {
       const params = [];
 
       if (ano) querySemAgrupamento += ' AND ano = ?', params.push(ano);
-      if (regiao) querySemAgrupamento += ' AND regiao = ?', params.push(regiao);
-      if (uf) querySemAgrupamento += ' AND uf = ?', params.push(uf);
+      if (regiao) querySemAgrupamento += ' AND dsc_regiao = ?', params.push(regiao);
+      if (uf) querySemAgrupamento += ' AND dsc_uf = ?', params.push(uf);
       if (municipio) querySemAgrupamento += ' AND dsc_municipio = ?', params.push(municipio);
-      if (catAdm) querySemAgrupamento += ' AND catAdm = ?', params.push(catAdm);
-      if (ies) querySemAgrupamento += ' AND ies = ?', params.push(ies);
+      if (catAdm) querySemAgrupamento += ' AND dsc_cat_adm = ?', params.push(catAdm);
+      if (ies) querySemAgrupamento += ' AND cod_ies = ?', params.push(ies);
       if (curso) querySemAgrupamento += ' AND dsc_grupo = ?', params.push(curso);
       if (presenca) querySemAgrupamento += ' AND cod_tipo_presenca = ?', params.push(presenca);
 
@@ -844,62 +924,31 @@ app.get('/quiquadrado', async (req, res) => {
       FROM \`mktd0358_enade_pcc\`.\`curso_notas\`
       WHERE 1 = 1
       `;
-  
+
       const params_agrp = [];
-      
-      // Adicionando filtros para cada parâmetro recebido
-      if (ano) {
-          queryComAgrupamento += ' AND ano = ?';
-          params_agrp.push(ano);
-      }
-      if (regiao) {
-          queryComAgrupamento += ' AND regiao = ?';
-          params_agrp.push(regiao);
-      }
-      if (uf) {
-          queryComAgrupamento += ' AND uf = ?';
-          params_agrp.push(uf);
-      }
-      if (municipio) {
-          queryComAgrupamento += ' AND dsc_municipio = ?';
-          params_agrp.push(municipio);
-      }
-      if (catAdm) {
-          queryComAgrupamento += ' AND catAdm = ?';
-          params_agrp.push(catAdm);
-      }
-      if (ies) {
-          queryComAgrupamento += ' AND ies = ?';
-          params_agrp.push(ies);
-      }
-      if (curso) {
-          queryComAgrupamento += ' AND dsc_grupo = ?';
-          params_agrp.push(curso);
-      }
-      if (presenca) {
-          queryComAgrupamento += ' AND cod_tipo_presenca = ?';
-          params_agrp.push(presenca);
-      }
-      
-      // Filtrando para remover os outliers da consulta com agrupamento
+      if (ano) queryComAgrupamento += ' AND ano = ?', params_agrp.push(ano);
+      if (regiao) queryComAgrupamento += ' AND dsc_regiao = ?', params_agrp.push(regiao);
+      if (uf) queryComAgrupamento += ' AND dsc_uf = ?', params_agrp.push(uf);
+      if (municipio) queryComAgrupamento += ' AND dsc_municipio = ?', params_agrp.push(municipio);
+      if (catAdm) queryComAgrupamento += ' AND dsc_cat_adm = ?', params_agrp.push(catAdm);
+      if (ies) queryComAgrupamento += ' AND cod_ies = ?', params_agrp.push(ies);
+      if (curso) queryComAgrupamento += ' AND dsc_grupo = ?', params_agrp.push(curso);
+      if (presenca) queryComAgrupamento += ' AND cod_tipo_presenca = ?', params_agrp.push(presenca);
+
       const valoresNumericos = valoresSemOutliers.filter(val => typeof val === 'number');
       if (valoresNumericos.length > 0) {
           queryComAgrupamento += ' AND ROUND(nota_geral, 1) IN (' + valoresNumericos.map(() => '?').join(', ') + ')';
           params_agrp.push(...valoresNumericos);
       }
-      
-      // Adicionando agrupamento e ordenação
+
       queryComAgrupamento += `
           GROUP BY ??, faixa_nota
           ORDER BY ??, faixa_nota
       `;
-      
       params_agrp.push(variavel, variavel);
-      
-      // Agora, a execução da consulta:
+
       const [resultados] = await db.query(queryComAgrupamento, params_agrp);
-  
-      // Construir tabela de contingência
+
       const tabelaContingencia = {};
       for (const row of resultados) {
           const varValue = row[variavel];
@@ -930,21 +979,21 @@ app.get('/quiquadrado', async (req, res) => {
       // Filtragem das colunas (não células) com todos os valores zero
       const tabelaContingenciaArrayFiltrada = tabelaContingenciaArray[0].map((_, colIndex) => {
           return tabelaContingenciaArray.map(row => row[colIndex]);
-      }).filter(col => col.some(val => val > 0));  // Filtrando colunas com todos os valores zero
+      }).filter(col => col.some(val => val > 0)); // Filtrar colunas com todos os valores zero
 
-      // Se todas as colunas foram removidas, retornamos um erro
       if (tabelaContingenciaArrayFiltrada.length === 0) {
           return res.status(400).json({ message: "Não há dados suficientes para realizar o teste qui-quadrado." });
       }
 
-      // Realizar o teste qui-quadrado de contingência
-      const { chi2, pValue, dof, expected } = chiSquareContingency(tabelaContingenciaArrayFiltrada);
+      // Realizar o teste de contingência
+      const { method, chi2, pValue, dof, expected } = chiSquareContingency(tabelaContingenciaArrayFiltrada);
       const resultadoSignificativo = pValue < alfa;
 
       const resposta = {
-          qui2: parseFloat(chi2.toFixed(2)),
+          metodo: method,
+          qui2: method === "Chi-Square Test" ? parseFloat(chi2.toFixed(2)) : undefined,
           valor_p: parseFloat(pValue.toFixed(2)),
-          graus_de_liberdade: dof,
+          graus_de_liberdade: method === "Chi-Square Test" ? dof : undefined,
           frequencias_esperadas: expected,
           frequencias_observadas: tabelaContingenciaArrayFiltrada,
           resultado_significativo: resultadoSignificativo
@@ -958,7 +1007,10 @@ app.get('/quiquadrado', async (req, res) => {
 });
 
 
+// Exemplo de uso
+// const a = 18, b = 4, c = 0, d = 2;
 
+// console.log(`p-value: ${fisherExactTestPValue(18, 4, 0, 2)}`);
 
 
 // Inicia o servidor
