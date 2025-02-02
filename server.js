@@ -889,7 +889,7 @@ app.get('/quiquadrado', async (req, res) => {
       return res.status(400).json({ message: 'O parâmetro "variavel" é obrigatório' });
   }
 
-  const colunasValidas = ['sexo', 'nota_geral', 'raca'];
+  const colunasValidas = ['sexo', 'raca', 'plano_ensino'];
   if (!colunasValidas.includes(variavel)) {
       return res.status(400).json({ message: `A coluna '${variavel}' não é válida. Escolha entre: ${colunasValidas.join(', ')}` });
   }
@@ -949,6 +949,11 @@ app.get('/quiquadrado', async (req, res) => {
 
       const [resultados] = await db.query(queryComAgrupamento, params_agrp);
 
+      // Verificando se algum valor para a variável é NULL
+      if (resultados.every(row => row[variavel] === "NULL")) {
+        return res.status(400).json({ message: `Não houveram respostas para a variável '${variavel}' selecionada.` });
+      }
+
       const tabelaContingencia = {};
       for (const row of resultados) {
           const varValue = row[variavel];
@@ -1006,6 +1011,21 @@ app.get('/quiquadrado', async (req, res) => {
   }
 });
 
+
+// Rota GET Variavel com parâmetro 'ano'
+app.get('/variavel/:ano', async (req, res) => {
+  const ano = req.params.ano; // Obtém o valor do parâmetro 'ano' na URL
+  
+  try {
+    // Consulta SQL com parâmetro 'ano' na cláusula WHERE
+    const [rows] = await db.query('SELECT DISTINCT variavel FROM variavel_ano WHERE ano = ?', [ano]);
+    
+    res.json(rows);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Erro ao buscar dados do banco de dados');
+  }
+});
 
 // Exemplo de uso
 // const a = 18, b = 4, c = 0, d = 2;
