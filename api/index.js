@@ -34,7 +34,7 @@ app.get("/", (req, res) => res.send("Express on Vercel"));
 // Rota GET Ano
 app.get('/anos', async (req, res) => {
   try {
-    const [rows] = await db.query('SELECT DISTINCT ano FROM vw_curso_completo'); // Substitua 'sua_tabela' pelo nome da sua tabela
+    const [rows] = await db.query('SELECT DISTINCT ano FROM curso_notas'); // Substitua 'sua_tabela' pelo nome da sua tabela
     res.json(rows);
   } catch (error) {
     console.error(error);
