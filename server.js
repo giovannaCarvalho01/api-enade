@@ -227,8 +227,33 @@ app.get('/notas/download', async (req, res) => {
     const { cod_ies, cat_adm, municipio, regiao, uf, grp, ano, presenca } = req.query;
   
     // Inicia a consulta SQL
-    let query = 'SELECT * FROM curso_notas WHERE 1=1';
+    let query = '';
     const params = [];
+
+    // Condições específicas para o ano
+    if (ano === '2022' || ano === '2021') {
+      // Query para 2021 e 2022
+      query = `SELECT 
+                ano,
+                cod_ies,
+                dsc_cat_adm,
+                cod_curso,
+                dsc_municipio,
+                dsc_regiao,
+                dsc_uf,
+                cod_grupo,
+                dsc_grupo,
+                dsc_tipo_presenca,
+                nota_geral,
+                plano_ensino,
+                cond_sala,
+                dsc_turno 
+                FROM curso_notas 
+                WHERE 1=1`;
+    } else {
+        // Query para outros anos
+        query = 'SELECT * FROM curso_notas WHERE 1=1';
+    }
   
     // Adicionando filtros à consulta
     if (cod_ies) {
@@ -314,9 +339,34 @@ app.get('/notas', async (req, res) => {
   // Pegando os parâmetros de filtro da query string
   const { cod_ies, cat_adm, municipio, regiao, uf, grp, ano, presenca } = req.query;
 
-  // Inicia a consulta SQL
-  let query = `SELECT * FROM curso_notas WHERE 1=1`;
-  const params = [];
+    // Inicia a consulta SQL
+    let query = '';
+    const params = [];
+
+    // Condições específicas para o ano
+    if (ano === '2022' || ano === '2021') {
+      // Query para 2021 e 2022
+      query = `SELECT 
+                ano,
+                cod_ies,
+                dsc_cat_adm,
+                cod_curso,
+                dsc_municipio,
+                dsc_regiao,
+                dsc_uf,
+                cod_grupo,
+                dsc_grupo,
+                dsc_tipo_presenca,
+                nota_geral,
+                plano_ensino,
+                cond_sala,
+                dsc_turno 
+                FROM curso_notas 
+                WHERE 1=1`;
+    } else {
+        // Query para outros anos
+        query = 'SELECT * FROM curso_notas WHERE 1=1';
+    }
 
   // Adicionando filtros à consulta
   if (cod_ies) {
@@ -656,99 +706,6 @@ app.get('/graficos', async (req, res) => {
 });
 
 
-
-// // Novo endpoint para o cálculo do Qui-Quadrado
-// app.get('/quiquadrado', async (req, res) => {
-//   const { ano, regiao, uf, municipio, catAdm, ies, curso, presenca, filtro, alpha } = req.query;
-
-//   // Verificando se o filtro (variável) foi fornecido
-//   if (!filtro) {
-//     return res.status(400).json({ message: 'Filtro de variável (ex. "sexo") é necessário' });
-//   }
-
-//   // Verificando se o alfa foi fornecido
-//   if (!alpha) {
-//     return res.status(400).json({ message: 'Alfa (nível de significância) é necessário' });
-//   }
-
-//   let query = `
-//       SELECT 
-//           nota_geral, ${filtro}
-//       FROM 
-//           curso_notas 
-//       WHERE 
-//           cod_tipo_presenca = '555' AND 1=1`;
-
-//   const params = [];
-
-//   // Adicionando condições dinamicamente com base nos filtros fornecidos
-//   if (ano) {
-//     query += ' AND ano = ?';
-//     params.push(ano);
-//   }
-//   if (regiao) {
-//     query += ' AND dsc_regiao = ?';
-//     params.push(regiao);
-//   }
-//   if (uf) {
-//     query += ' AND dsc_uf = ?';
-//     params.push(uf);
-//   }
-//   if (municipio) {
-//     query += ' AND dsc_municipio = ?';
-//     params.push(municipio);
-//   }
-//   if (catAdm) {
-//     query += ' AND dsc_cat_adm = ?';
-//     params.push(catAdm);
-//   }
-//   if (ies) {
-//     query += ' AND cod_ies = ?';
-//     params.push(ies);
-//   }
-//   if (curso) {
-//     query += ' AND dsc_grupo = ?';
-//     params.push(curso);
-//   }
-//   if (presenca) {
-//     query += ' AND cod_tipo_presenca = ?';
-//     params.push(presenca);
-//   }
-
-//   try {
-//     const [rows] = await db.query(query, params);
-//     if (rows.length === 0) {
-//       return res.status(404).json({ message: 'Nenhum dado encontrado para os filtros fornecidos' });
-//     }
-
-//     // Extraímos as notas e aplicamos o filtro de outliers
-//     const notas = rows.map(row => row.nota_geral);
-//     const { valoresSemOutliers, outliers } = findOutliers(notas);
-
-//     // Filtramos os dados para pegar as linhas sem os outliers
-//     const filteredData = rows.filter(row => valoresSemOutliers.includes(row.nota_geral));
-
-//     // Agora calculamos o qui-quadrado com base na variável fornecida
-//     const chiSquareResult = calculateChiSquare(filteredData, filtro, parseFloat(alpha));
-
-//     // Retornamos a resposta com os resultados
-//     res.status(200).json({
-//       valoresSemOutliers,
-//       outliers,
-//       chiSquare: {
-//         chiSquared: chiSquareResult.chiSquared,
-//         degreesOfFreedom: chiSquareResult.degreesOfFreedom,
-//         criticalValue: chiSquareResult.criticalValue,
-//         rejectNullHypothesis: chiSquareResult.rejectNullHypothesis
-//       }
-//     });
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).json({ message: 'Erro ao buscar os dados', error: error.message });
-//   }
-// });
-
-
 // Função para encontrar os outliers (boxplot)
 function findOutliers(data) {
   const sortedValues = [...data].sort((a, b) => a - b);
@@ -951,7 +908,7 @@ app.get('/quiquadrado', async (req, res) => {
 
       // Verificando se algum valor para a variável é NULL
       if (resultados.every(row => row[variavel] === "NULL")) {
-        return res.status(400).json({ message: `Não houveram respostas para a variável '${variavel}' selecionada.` });
+        return res.status(400).json({ message: `Não houveram respostas para a variável '${variavel}' selecionada. Então não é possível realizar o cálculo do qui-quadrado.` });
       }
 
       const tabelaContingencia = {};
