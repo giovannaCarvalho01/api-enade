@@ -234,20 +234,26 @@ app.get('/notas/download', async (req, res) => {
     if (ano === '2022' || ano === '2021') {
       // Query para 2021 e 2022
       query = `SELECT 
-                ano,
-                cod_ies,
-                dsc_cat_adm,
-                cod_curso,
-                dsc_municipio,
-                dsc_regiao,
-                dsc_uf,
-                cod_grupo,
-                dsc_grupo,
-                dsc_tipo_presenca,
-                nota_geral,
-                plano_ensino,
-                cond_sala,
-                dsc_turno 
+                ano AS Ano,
+                cod_ies AS 'Codigo da IES',
+                dsc_cat_adm AS 'Categoria Administrativa',
+                cod_curso AS 'Codigo do Curso',
+                dsc_municipio AS 'Municipio',
+                dsc_regiao AS 'Regiao',
+                dsc_uf AS 'UF',
+                cod_grupo AS 'Codigo do Grupo',
+                dsc_grupo AS 'Curso',
+                dsc_tipo_presenca AS 'Tipo de Presenca',
+                nota_geral AS 'Nota Geral',
+                CASE 
+                  WHEN plano_ensino = 'NULL' THEN 'Não respondeu'
+                  ELSE plano_ensino END AS 'Plano de Ensino',
+                CASE 
+                  WHEN cond_sala = 'NULL' THEN 'Não respondeu'
+                  ELSE cond_sala END AS 'Condicao da Sala',
+                CASE 
+                  WHEN dsc_turno = 'NULL' THEN 'Não respondeu'
+                  ELSE dsc_turno END AS 'Turno'
                 FROM curso_notas 
                 WHERE 1=1`;
     } else {
@@ -347,20 +353,26 @@ app.get('/notas', async (req, res) => {
     if (ano === '2022' || ano === '2021') {
       // Query para 2021 e 2022
       query = `SELECT 
-                ano,
-                cod_ies,
-                dsc_cat_adm,
-                cod_curso,
-                dsc_municipio,
-                dsc_regiao,
-                dsc_uf,
-                cod_grupo,
-                dsc_grupo,
-                dsc_tipo_presenca,
-                nota_geral,
-                plano_ensino,
-                cond_sala,
-                dsc_turno 
+                ano AS Ano,
+                cod_ies AS 'Codigo da IES',
+                dsc_cat_adm AS 'Categoria Administrativa',
+                cod_curso AS 'Codigo do Curso',
+                dsc_municipio AS 'Municipio',
+                dsc_regiao AS 'Regiao',
+                dsc_uf AS 'UF',
+                cod_grupo AS 'Codigo do Grupo',
+                dsc_grupo AS 'Curso',
+                dsc_tipo_presenca AS 'Tipo de Presenca',
+                nota_geral AS 'Nota Geral',
+                CASE 
+                  WHEN plano_ensino = 'NULL' THEN 'Não respondeu'
+                  ELSE plano_ensino END AS 'Plano de Ensino',
+                CASE 
+                  WHEN cond_sala = 'NULL' THEN 'Não respondeu'
+                  ELSE cond_sala END AS 'Condicao da Sala',
+                CASE 
+                  WHEN dsc_turno = 'NULL' THEN 'Não respondeu'
+                  ELSE dsc_turno END AS 'Turno'
                 FROM curso_notas 
                 WHERE 1=1`;
     } else {
@@ -873,7 +885,10 @@ app.get('/quiquadrado', async (req, res) => {
       const { valoresSemOutliers } = findOutliers(valoresNotas);
 
       let queryComAgrupamento = `
-      SELECT ${variavel}, 
+      SELECT 
+            CASE
+                WHEN ${variavel} = 'NULL' THEN 'Não respondeu'  
+                ELSE ${variavel} END AS ${variavel},  
              CASE
                  WHEN nota_geral < 50 THEN 'BAIXO'
                  WHEN nota_geral >= 50 AND nota_geral < 80 THEN 'MEDIO'
