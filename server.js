@@ -603,7 +603,9 @@ app.get('/graficos', async (req, res) => {
 
   let query = `
     SELECT 
-        ${variavel} AS variavel, 
+        CASE 
+          WHEN ${variavel} = 'NULL' THEN 'Não respondeu'
+        ELSE ${variavel} END AS variavel, 
         COUNT(*) AS quantidade, 
         COUNT(*) * 100.0 / (
             SELECT COUNT(*) 
@@ -954,9 +956,13 @@ app.get('/quiquadrado', async (req, res) => {
       const resposta = {
           metodo: method,
           qui2: method === "Chi-Square Test" ? parseFloat(chi2.toFixed(2)) : undefined,
-          valor_p: parseFloat(pValue.toFixed(2)),
+          valor_p: parseFloat(pValue.toFixed(4)),
           graus_de_liberdade: method === "Chi-Square Test" ? dof : undefined,
-          frequencias_esperadas: expected,
+          frequencias_esperadas: {
+            colunas: Object.keys(tabelaContingenciaFiltrada),
+            linhas: ["BAIXO", "MEDIO", "ALTO"],
+            matriz: expected.map(row => row.map(value => parseFloat(value.toFixed(2))))
+          },
           frequencias_observadas: tabelaContingenciaArrayFiltrada,
           resultado_significativo: resultadoSignificativo
       };

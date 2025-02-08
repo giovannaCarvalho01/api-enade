@@ -497,7 +497,9 @@ app.get('/graficos', async (req, res) => {
 
   let query = `
     SELECT 
-        ${variavel} AS variavel, 
+        CASE
+          WHEN ${variavel} = 'NULL' THEN 'Não respondeu'
+          ELSE ${variavel} END AS variavel, 
         COUNT(*) AS quantidade, 
         COUNT(*) * 100.0 / (
             SELECT COUNT(*) 
