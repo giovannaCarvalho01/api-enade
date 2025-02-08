@@ -963,7 +963,11 @@ app.get('/quiquadrado', async (req, res) => {
             linhas: ["BAIXO", "MEDIO", "ALTO"],
             matriz: expected.map(row => row.map(value => parseFloat(value.toFixed(2))))
           },
-          frequencias_observadas: tabelaContingenciaArrayFiltrada,
+          frequencias_observadas: {
+            colunas: Object.keys(tabelaContingenciaFiltrada),
+            linhas: ["BAIXO", "MEDIO", "ALTO"],
+            matriz: tabelaContingenciaArrayFiltrada,
+          },
           resultado_significativo: resultadoSignificativo
       };
 

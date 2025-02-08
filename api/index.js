@@ -852,8 +852,16 @@ app.get('/quiquadrado', async (req, res) => {
           qui2: method === "Chi-Square Test" ? parseFloat(chi2.toFixed(2)) : undefined,
           valor_p: parseFloat(pValue.toFixed(2)),
           graus_de_liberdade: method === "Chi-Square Test" ? dof : undefined,
-          frequencias_esperadas: expected.map(row => row.map(value => parseFloat(value.toFixed(2)))),
-          frequencias_observadas: tabelaContingenciaArrayFiltrada,
+          frequencias_esperadas: {
+            colunas: Object.keys(tabelaContingenciaFiltrada),
+            linhas: ["BAIXO", "MEDIO", "ALTO"],
+            matriz: expected.map(row => row.map(value => parseFloat(value.toFixed(2))))
+          },          
+          frequencias_observadas: {
+            colunas: Object.keys(tabelaContingenciaFiltrada),
+            linhas: ["BAIXO", "MEDIO", "ALTO"],
+            matriz: tabelaContingenciaArrayFiltrada,
+          },
           resultado_significativo: resultadoSignificativo
       };
 
