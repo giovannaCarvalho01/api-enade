@@ -64,7 +64,14 @@ app.get('/filter', async (req, res) => {
     const colunaSelecionada = colunasPermitidas.includes(coluna) ? coluna : 'dsc_regiao_completo';
   
     // Inicia a consulta SQL base
-    let query = `SELECT DISTINCT ${colunaSelecionada} FROM curso_notas WHERE cod_tipo_presenca = '555' AND 1=1`;  // Usa a coluna selecionada
+    let query = 
+    `SELECT DISTINCT 
+    ${colunaSelecionada} 
+    FROM curso_notas 
+    WHERE 
+    cod_tipo_presenca = '555' 
+    AND 1=1
+    `;  // Usa a coluna selecionada
   
     // Array para armazenar os parâmetros da consulta
     const params = [];
@@ -104,6 +111,11 @@ app.get('/filter', async (req, res) => {
       query += ' AND ano = ?';
       params.push(ano);
     }
+    query += 
+    `ORDER BY
+    ${colunaSelecionada}
+    ASC 
+    `;
   
     try {
       // Executa a consulta com os parâmetros dinâmicos

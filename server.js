@@ -210,7 +210,13 @@ app.get('/filter', async (req, res) => {
       query += ' AND ano = ?';
       params.push(ano);
     }
-  
+
+    query += 
+    `ORDER BY
+    ${colunaSelecionada}
+    ASC 
+    `;
+    
     try {
       // Executa a consulta com os parâmetros dinâmicos
       const [rows] = await db.query(query, params);
