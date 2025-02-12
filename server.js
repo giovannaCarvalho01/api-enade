@@ -4,8 +4,11 @@ import dotenv from 'dotenv';
 import mysql from 'mysql2/promise';
 import ExcelJS from 'exceljs';
 import jstat from 'jstat';
-
-// const jstat = require('jstat');
+// import fs from 'fs';
+// import path from 'path';
+// import parse  from 'json2csv';
+import { parse } from 'json2csv';
+import PDFDocument from 'pdfkit';
 
 dotenv.config();
 
@@ -345,6 +348,201 @@ app.get('/notas/download', async (req, res) => {
       res.status(500).send('Erro ao gerar o arquivo Excel');
     }
   });
+
+app.get('/notas/download/csv', async (req, res) => {
+  const { cod_ies, cat_adm, municipio, regiao, uf, grp, ano, presenca } = req.query;
+
+  let query = '';
+  const params = [];
+
+  if (ano === '2022' || ano === '2021') {
+    query = `SELECT 
+              ano AS Ano,
+              cod_ies AS 'Codigo da IES',
+              dsc_cat_adm AS 'Categoria Administrativa',
+              cod_curso AS 'Codigo do Curso',
+              dsc_municipio AS 'Municipio',
+              dsc_regiao AS 'Regiao',
+              dsc_uf AS 'UF',
+              cod_grupo AS 'Codigo do Grupo',
+              dsc_grupo AS 'Curso',
+              dsc_tipo_presenca AS 'Tipo de Presenca',
+              nota_geral AS 'Nota Geral',
+              CASE 
+                WHEN plano_ensino = 'NULL' THEN 'Não respondeu'
+                ELSE plano_ensino END AS 'Plano de Ensino',
+              CASE 
+                WHEN cond_sala = 'NULL' THEN 'Não respondeu'
+                ELSE cond_sala END AS 'Condicao da Sala',
+              CASE 
+                WHEN dsc_turno = 'NULL' THEN 'Não respondeu'
+                ELSE dsc_turno END AS 'Turno'
+              FROM curso_notas 
+              WHERE 1=1`;
+  } else {
+    query = 'SELECT * FROM curso_notas WHERE 1=1';
+  }
+
+  // Adicionando os filtros à consulta
+  if (cod_ies) {
+    query += ' AND cod_ies = ?';
+    params.push(cod_ies);
+  }
+  if (cat_adm) {
+    query += ' AND dsc_cat_adm = ?';
+    params.push(cat_adm);
+  }
+  if (municipio) {
+    query += ' AND dsc_municipio = ?';
+    params.push(municipio);
+  }
+  if (regiao) {
+    query += ' AND dsc_regiao = ?';
+    params.push(regiao);
+  }
+  if (uf) {
+    query += ' AND dsc_uf = ?';
+    params.push(uf);
+  }
+  if (grp) {
+    query += ' AND dsc_grupo = ?';
+    params.push(grp);
+  }
+  if (ano) {
+    query += ' AND ano = ?';
+    params.push(ano);
+  }
+  if (presenca) {
+    query += ' AND cod_tipo_presenca = ?';
+    params.push(presenca);
+  }
+
+  try {
+    const [rows] = await db.query(query, params);
+    
+    if (rows.length > 0) {
+      // Usando o 'parse' para gerar CSV a partir dos dados
+      const csvData = parse(rows);
+      
+      const nomeArquivo = `notas_${Date.now()}.csv`;
+      
+      // Configurando o cabeçalho para o download do arquivo CSV
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', `attachment; filename=${nomeArquivo}`);
+      
+      // Envia o arquivo CSV para o cliente
+      res.send(csvData);
+    } else {
+      res.status(404).send('Nenhum dado encontrado para os filtros fornecidos');
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Erro ao gerar o arquivo CSV');
+  }
+});
+
+
+app.get('/notas/download/pdf', async (req, res) => {
+  const { cod_ies, cat_adm, municipio, regiao, uf, grp, ano, presenca } = req.query;
+
+  let query = '';
+  const params = [];
+
+  if (ano === '2022' || ano === '2021') {
+    query = `SELECT 
+              ano AS Ano,
+              cod_ies AS 'Código da IES',
+              dsc_cat_adm AS 'Categoria Administrativa',
+              dsc_municipio AS 'Município',
+              dsc_regiao AS 'Região',
+              dsc_uf AS 'UF',
+              dsc_grupo AS 'Curso',
+              nota_geral AS 'Nota Geral',
+              plano_ensino AS 'Plano de Ensino',
+              cond_sala AS 'Condição da Sala',
+              dsc_turno AS 'Turno'
+              FROM curso_notas 
+              WHERE 1=1`;
+  } else {
+    query = 'SELECT * FROM curso_notas WHERE 1=1';
+  }
+
+  // Adicionando filtros à consulta
+  if (cod_ies) query += ' AND cod_ies = ?', params.push(cod_ies);
+  if (cat_adm) query += ' AND dsc_cat_adm = ?', params.push(cat_adm);
+  if (municipio) query += ' AND dsc_municipio = ?', params.push(municipio);
+  if (regiao) query += ' AND dsc_regiao = ?', params.push(regiao);
+  if (uf) query += ' AND dsc_uf = ?', params.push(uf);
+  if (grp) query += ' AND dsc_grupo = ?', params.push(grp);
+  if (ano) query += ' AND ano = ?', params.push(ano);
+  if (presenca) query += ' AND cod_tipo_presenca = ?', params.push(presenca);
+
+  try {
+    const [rows] = await db.query(query, params);
+
+    if (rows.length > 0) {
+      const doc = new PDFDocument({ margin: 20, layout: 'landscape', size: 'A4' });
+      const nomeArquivo = `notas_${Date.now()}.pdf`;
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename=${nomeArquivo}`);
+      doc.pipe(res);
+
+      // Título
+      doc.fontSize(16).text('Relatório de Notas', { align: 'center' });
+      doc.moveDown(1.5);
+
+      // Configuração da tabela
+      const startX = 20;
+      const startY = 80;
+      const maxWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
+      const columnWidth = maxWidth / Object.keys(rows[0]).length; // Dividir espaço igualmente
+      const rowHeight = 18;
+      const fontSize = 7; // Redução para caber mais colunas
+      const columns = Object.keys(rows[0]);
+
+      doc.fontSize(fontSize);
+
+      // Cabeçalhos
+      let currentY = startY;
+      doc.font('Helvetica-Bold');
+      columns.forEach((col, i) => {
+        doc.text(col, startX + i * columnWidth, currentY, { width: columnWidth, align: 'center' });
+      });
+      currentY += rowHeight;
+
+      // Linha divisória para os cabeçalhos
+      doc.moveTo(startX, currentY - rowHeight).lineTo(startX + columnWidth * columns.length, currentY - rowHeight).stroke();
+
+      // Dados da tabela
+      doc.font('Helvetica');
+      rows.forEach((row) => {
+        let currentX = startX;
+        columns.forEach((col) => {
+          doc.text(String(row[col] || ''), currentX, currentY, { width: columnWidth, align: 'center' });
+          currentX += columnWidth;
+        });
+        currentY += rowHeight;
+
+        // Verificar limite da página
+        if (currentY > doc.page.height - doc.page.margins.bottom) {
+          doc.addPage({ layout: 'landscape' });
+          currentY = startY;
+        }
+      });
+
+      // Linha final
+      doc.moveTo(startX, currentY).lineTo(startX + columnWidth * columns.length, currentY).stroke();
+
+      doc.end();
+    } else {
+      res.status(404).send('Nenhum dado encontrado para os filtros fornecidos');
+    }
+  } catch (error) {
+    console.error('Erro ao gerar o PDF:', error);
+    res.status(500).send('Erro ao gerar o arquivo PDF');
+  }
+});
+
 
 // ENDPOINT TABLE
 app.get('/notas', async (req, res) => {
@@ -897,7 +1095,7 @@ app.get('/quiquadrado', async (req, res) => {
                 ELSE ${variavel} END AS ${variavel},  
              CASE
                  WHEN nota_geral < 50 THEN 'BAIXO'
-                 WHEN nota_geral >= 50 AND nota_geral < 80 THEN 'MEDIO'
+                 WHEN nota_geral >= 50 AND nota_geral < 70 THEN 'MEDIO'
                  ELSE 'ALTO'
              END AS faixa_nota,
              COUNT(*) as count
