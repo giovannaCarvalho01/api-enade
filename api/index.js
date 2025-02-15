@@ -158,7 +158,7 @@ app.get('/notas/download', async (req, res) => {
                   ELSE plano_ensino END AS 'Plano de Ensino',
                 CASE 
                   WHEN cond_sala = 'NULL' THEN 'Não respondeu'
-                  ELSE cond_sala END AS 'Condicao da Sala',
+                  ELSE cond_sala END AS 'Condição da Sala',
                 CASE 
                   WHEN dsc_turno = 'NULL' THEN 'Não respondeu'
                   ELSE dsc_turno END AS 'Turno'
@@ -272,7 +272,7 @@ app.get('/notas/download/csv', async (req, res) => {
                 ELSE plano_ensino END AS 'Plano de Ensino',
               CASE 
                 WHEN cond_sala = 'NULL' THEN 'Não respondeu'
-                ELSE cond_sala END AS 'Condicao da Sala',
+                ELSE cond_sala END AS 'Condição da Sala',
               CASE 
                 WHEN dsc_turno = 'NULL' THEN 'Não respondeu'
                 ELSE dsc_turno END AS 'Turno'
@@ -369,7 +369,7 @@ app.get('/notas', async (req, res) => {
                   ELSE plano_ensino END AS 'Plano de Ensino',
                 CASE 
                   WHEN cond_sala = 'NULL' THEN 'Não respondeu'
-                  ELSE cond_sala END AS 'Condicao da Sala',
+                  ELSE cond_sala END AS 'Condição da Sala',
                 CASE 
                   WHEN dsc_turno = 'NULL' THEN 'Não respondeu'
                   ELSE dsc_turno END AS 'Turno'
