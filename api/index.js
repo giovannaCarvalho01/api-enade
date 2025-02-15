@@ -143,15 +143,15 @@ app.get('/notas/download', async (req, res) => {
       // Query para 2021 e 2022
       query = `SELECT 
                 ano AS Ano,
-                cod_ies AS 'Codigo da IES',
+                cod_ies AS 'Código da IES',
                 dsc_cat_adm AS 'Categoria Administrativa',
-                cod_curso AS 'Codigo do Curso',
-                dsc_municipio AS 'Municipio',
-                dsc_regiao AS 'Regiao',
+                cod_curso AS 'Código do Curso',
+                dsc_municipio AS 'Município',
+                dsc_regiao AS 'Região',
                 dsc_uf AS 'UF',
-                cod_grupo AS 'Codigo do Grupo',
+                cod_grupo AS 'Código do Grupo',
                 dsc_grupo AS 'Curso',
-                dsc_tipo_presenca AS 'Tipo de Presenca',
+                dsc_tipo_presenca AS 'Tipo de Presença',
                 nota_geral AS 'Nota Geral',
                 CASE 
                   WHEN plano_ensino = 'NULL' THEN 'Não respondeu'
@@ -257,15 +257,15 @@ app.get('/notas/download/csv', async (req, res) => {
   if (ano === '2022' || ano === '2021') {
     query = `SELECT 
               ano AS Ano,
-              cod_ies AS 'Codigo da IES',
+              cod_ies AS 'Código da IES',
               dsc_cat_adm AS 'Categoria Administrativa',
-              cod_curso AS 'Codigo do Curso',
-              dsc_municipio AS 'Municipio',
-              dsc_regiao AS 'Regiao',
+              cod_curso AS 'Código do Curso',
+              dsc_municipio AS 'Município',
+              dsc_regiao AS 'Região',
               dsc_uf AS 'UF',
-              cod_grupo AS 'Codigo do Grupo',
+              cod_grupo AS 'Código do Grupo',
               dsc_grupo AS 'Curso',
-              dsc_tipo_presenca AS 'Tipo de Presenca',
+              dsc_tipo_presenca AS 'Tipo de Presença',
               nota_geral AS 'Nota Geral',
               CASE 
                 WHEN plano_ensino = 'NULL' THEN 'Não respondeu'
@@ -354,15 +354,15 @@ app.get('/notas', async (req, res) => {
       // Query para 2021 e 2022
       query = `SELECT 
                 ano AS Ano,
-                cod_ies AS 'Codigo da IES',
+                cod_ies AS 'Código da IES',
                 dsc_cat_adm AS 'Categoria Administrativa',
-                cod_curso AS 'Codigo do Curso',
-                dsc_municipio AS 'Municipio',
-                dsc_regiao AS 'Regiao',
+                cod_curso AS 'Código do Curso',
+                dsc_municipio AS 'Município',
+                dsc_regiao AS 'Região',
                 dsc_uf AS 'UF',
-                cod_grupo AS 'Codigo do Grupo',
+                cod_grupo AS 'Código do Grupo',
                 dsc_grupo AS 'Curso',
-                dsc_tipo_presenca AS 'Tipo de Presenca',
+                dsc_tipo_presenca AS 'Tipo de Presença',
                 nota_geral AS 'Nota Geral',
                 CASE 
                   WHEN plano_ensino = 'NULL' THEN 'Não respondeu'
