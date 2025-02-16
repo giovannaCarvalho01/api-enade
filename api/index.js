@@ -867,12 +867,7 @@ app.get('/quiquadrado', async (req, res) => {
 
   try {
       // Query sem agrupamento
-      let querySemAgrupamento = 
-      `SELECT 
-      ${variavel}
-      , nota_geral 
-      FROM \`mktd0358_enade_pcc\`.\`curso_notas\` 
-      WHERE 1 = 1`;
+      let querySemAgrupamento = `SELECT ${variavel}, nota_geral FROM \`mktd0358_enade_pcc\`.\`curso_notas\` WHERE 1 = 1`;
       const params = [];
 
       if (ano) querySemAgrupamento += ' AND ano = ?', params.push(ano);
@@ -890,16 +885,16 @@ app.get('/quiquadrado', async (req, res) => {
       const { valoresSemOutliers } = findOutliers(valoresNotas);
 
       let queryComAgrupamento = `
-      SELECT
-            CASE
-                WHEN ${variavel} = 'NULL' THEN 'Não respondeu'  
-                ELSE ${variavel} END AS ${variavel}, 
-             CASE
-                 WHEN nota_geral < 50 THEN 'BAIXO'
-                 WHEN nota_geral >= 50 AND nota_geral < 70 THEN 'MEDIO'
-                 ELSE 'ALTO'
-             END AS faixa_nota,
-             COUNT(*) as count
+      SELECT 
+          CASE
+              WHEN ${variavel} = 'NULL' THEN 'Não respondeu'  
+              ELSE ${variavel} END AS ${variavel},  
+          CASE
+              WHEN nota_geral < 50 THEN 'BAIXO'
+              WHEN nota_geral >= 50 AND nota_geral < 70 THEN 'MEDIO'
+              ELSE 'ALTO'
+          END AS faixa_nota,
+          COUNT(*) as count
       FROM \`mktd0358_enade_pcc\`.\`curso_notas\`
       WHERE 1 = 1
       `;
@@ -930,7 +925,7 @@ app.get('/quiquadrado', async (req, res) => {
 
       // Verificando se algum valor para a variável é NULL
       if (resultados.every(row => row[variavel] === "NULL")) {
-        return res.status(400).json({ message: `Não houveram respostas para a variável '${variavel}' selecionada. Então não é possível realizar o cálculo do qui-quadrado.` });
+          return res.status(400).json({ message: `Não houveram respostas para a variável '${variavel}' selecionada. Então não é possível realizar o cálculo do qui-quadrado.` });
       }
 
       const tabelaContingencia = {};
@@ -954,23 +949,27 @@ app.get('/quiquadrado', async (req, res) => {
           return res.status(400).json({ message: "Não há dados suficientes para realizar o teste." });
       }
 
-      const tabelaContingenciaArray = Object.values(tabelaContingenciaFiltrada).map(v => [
-          v.BAIXO || 0,
-          v.MEDIO || 0,
-          v.ALTO || 0
-      ]);
-
-      // Filtragem das colunas (não células) com todos os valores zero
-      const tabelaContingenciaArrayFiltrada = tabelaContingenciaArray[0].map((_, colIndex) => {
-          return tabelaContingenciaArray.map(row => row[colIndex]);
-      }).filter(col => col.some(val => val > 0)); // Filtrar colunas com todos os valores zero
-
-      if (tabelaContingenciaArrayFiltrada.length === 0) {
-          return res.status(400).json({ message: "Não há dados suficientes para realizar o teste qui-quadrado." });
+      // Transforma a tabela para a estrutura desejada
+      const tabelaTransformada = {};
+      for (const faixa of ["BAIXO", "MEDIO", "ALTO"]) {
+          tabelaTransformada[faixa] = {};
+          for (const [varValue, valores] of Object.entries(tabelaContingenciaFiltrada)) {
+              tabelaTransformada[faixa][varValue] = valores[faixa] || 0;
+          }
       }
 
+      const respostaTransformada = {
+          colunas: ["BAIXO", "MEDIO", "ALTO"],
+          linhas: Object.keys(tabelaContingenciaFiltrada),
+          matriz: Object.keys(tabelaContingenciaFiltrada).map(varValue => [
+              tabelaTransformada["BAIXO"][varValue] || 0,
+              tabelaTransformada["MEDIO"][varValue] || 0,
+              tabelaTransformada["ALTO"][varValue] || 0,
+          ])
+      };
+
       // Realizar o teste de contingência
-      const { method, chi2, pValue, dof, expected } = chiSquareContingency(tabelaContingenciaArrayFiltrada);
+      const { method, chi2, pValue, dof, expected } = chiSquareContingency(respostaTransformada.matriz);
       const resultadoSignificativo = pValue < alfa;
 
       const resposta = {
@@ -979,15 +978,11 @@ app.get('/quiquadrado', async (req, res) => {
           valor_p: parseFloat(pValue.toFixed(4)),
           graus_de_liberdade: method === "Chi-Square Test" ? dof : undefined,
           frequencias_esperadas: {
-            colunas: Object.keys(tabelaContingenciaFiltrada),
-            linhas: ["BAIXO", "MEDIO", "ALTO"],
-            matriz: expected.map(row => row.map(value => parseFloat(value.toFixed(2))))
-          },          
-          frequencias_observadas: {
-            colunas: Object.keys(tabelaContingenciaFiltrada),
-            linhas: ["BAIXO", "MEDIO", "ALTO"],
-            matriz: tabelaContingenciaArrayFiltrada,
+              colunas: respostaTransformada.colunas,
+              linhas: respostaTransformada.linhas,
+              matriz: expected.map(row => row.map(value => parseFloat(value.toFixed(2))))
           },
+          frequencias_observadas: respostaTransformada,
           resultado_significativo: resultadoSignificativo
       };
 
@@ -997,6 +992,7 @@ app.get('/quiquadrado', async (req, res) => {
       res.status(500).json({ message: 'Erro ao processar a requisição' });
   }
 });
+
 
 
 // Rota GET Variavel com parâmetro 'ano'
