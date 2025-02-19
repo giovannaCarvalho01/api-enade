@@ -1150,7 +1150,7 @@ app.get('/quiquadrado', async (req, res) => {
       );
 
       if (Object.keys(tabelaContingenciaFiltrada).length < 2) {
-          return res.status(400).json({ message: "Não há dados suficientes para realizar o teste." });
+          return res.status(400).json({ message: "Não há dados suficientes para realizar o teste. Com os filtros selecionados, não há mais de uma variável disponível para permitir a realização de análises." });
       }
 
       // Transforma a tabela para a estrutura desejada
