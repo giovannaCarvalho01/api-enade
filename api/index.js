@@ -967,6 +967,31 @@ app.get('/quiquadrado', async (req, res) => {
               tabelaTransformada["ALTO"][varValue] || 0,
           ])
       };
+      // Verifica e remove colunas onde todas as linhas são iguais a 0
+      const colunasParaRemover = new Set();
+      for (let col = 0; col < respostaTransformada.matriz[0].length; col++) {
+          let todasLinhasZero = true;
+          for (let lin = 0; lin < respostaTransformada.matriz.length; lin++) {
+              if (respostaTransformada.matriz[lin][col] !== 0) {
+                  todasLinhasZero = false;
+                  break;
+              }
+          }
+          if (todasLinhasZero) {
+              colunasParaRemover.add(col);
+          }
+      }
+
+      // Remove as colunas marcadas para remoção
+      if (colunasParaRemover.size > 0) {
+          respostaTransformada.colunas = respostaTransformada.colunas.filter((_, index) => !colunasParaRemover.has(index));
+          respostaTransformada.matriz = respostaTransformada.matriz.map(linha => linha.filter((_, index) => !colunasParaRemover.has(index)));
+      }
+
+      // Verifica se ainda há colunas suficientes para o teste
+      if (respostaTransformada.colunas.length < 2) {
+          return res.status(400).json({ message: "Não há dados suficientes para realizar o teste. Com os filtros selecionados, não há mais de uma variável disponível para permitir a realização de análises." });
+      }
 
       // Realizar o teste de contingência
       const { method, chi2, pValue, dof, expected } = chiSquareContingency(respostaTransformada.matriz);
