@@ -572,10 +572,19 @@ app.get('/boxplot', async (req, res) => {
 
     // Cálculo do IQR (Interquartile Range)
     const sortedValues = [...valores].sort((a, b) => a - b);
-    const q1Index = Math.floor((sortedValues.length / 4));
-    const q3Index = Math.floor((sortedValues.length * 3) / 4);
-    const q1 = sortedValues[q1Index];
-    const q3 = sortedValues[q3Index];
+    const quantile = (arr, q) => {
+      const pos = (arr.length - 1) * q;
+      const base = Math.floor(pos);
+      const rest = pos - base;
+    
+      if (arr[base + 1] !== undefined) {
+        return arr[base] + rest * (arr[base + 1] - arr[base]);
+      }
+      return arr[base];
+    };
+    
+    const q1 = quantile(sortedValues, 0.25);
+    const q3 = quantile(sortedValues, 0.75);   
     const iqr = q3 - q1;
 
     const lowerBound = q1 - 1.5 * iqr;
@@ -723,10 +732,19 @@ app.get('/graficos', async (req, res) => {
 // Função para encontrar os outliers (boxplot)
 function findOutliers(data) {
   const sortedValues = [...data].sort((a, b) => a - b);
-  const q1Index = Math.floor(sortedValues.length / 4);
-  const q3Index = Math.floor((sortedValues.length * 3) / 4);
-  const q1 = sortedValues[q1Index];
-  const q3 = sortedValues[q3Index];
+  const quantile = (arr, q) => {
+    const pos = (arr.length - 1) * q;
+    const base = Math.floor(pos);
+    const rest = pos - base;
+  
+    if (arr[base + 1] !== undefined) {
+      return arr[base] + rest * (arr[base + 1] - arr[base]);
+    }
+    return arr[base];
+  };
+  
+  const q1 = quantile(sortedValues, 0.25);
+  const q3 = quantile(sortedValues, 0.75);   
   const iqr = q3 - q1;
 
   const lowerBound = q1 - 1.5 * iqr;
