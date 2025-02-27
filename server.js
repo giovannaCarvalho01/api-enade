@@ -233,14 +233,14 @@ app.get('/filter', async (req, res) => {
 //   baixar notas
 app.get('/notas/download', async (req, res) => {
     // Pegando os parâmetros de filtro da query string
-    const { cod_ies, cat_adm, municipio, regiao, uf, grp, ano, presenca } = req.query;
+    const { cod_ies, cat_adm, municipio, regiao, uf, grp, ano, presenca, all } = req.query;
   
     // Inicia a consulta SQL
     let query = '';
     const params = [];
 
     // Condições específicas para o ano
-    if (ano === '2022' || ano === '2021') {
+    if (all === 'não') {
       // Query para 2021 e 2022
       query = `SELECT 
                 ano AS Ano,
@@ -267,7 +267,68 @@ app.get('/notas/download', async (req, res) => {
                 WHERE 1=1`;
     } else {
         // Query para outros anos
-        query = 'SELECT * FROM curso_notas WHERE 1=1';
+        query = `SELECT 
+        ano AS Ano,
+        cod_ies AS 'Codigo da IES',
+        dsc_cat_adm AS 'Categoria Administrativa',
+        cod_curso AS 'Codigo do Curso',
+        dsc_municipio AS 'Municipio',
+        dsc_regiao AS 'Regiao',
+        dsc_uf AS 'UF',
+        cod_grupo AS 'Codigo do Grupo',
+        dsc_grupo AS 'Curso',
+        dsc_tipo_presenca AS 'Tipo de Presenca',
+        nota_geral AS 'Nota Geral',
+        CASE 
+          WHEN plano_ensino = 'NULL' THEN 'Não respondeu'
+          ELSE plano_ensino END AS 'Plano de Ensino',
+        CASE 
+          WHEN cond_sala = 'NULL' THEN 'Não respondeu'
+          ELSE cond_sala END AS 'Condicao da Sala',
+        CASE 
+          WHEN cat_em = 'NULL' THEN 'Não respondeu'
+          ELSE cat_em END AS 'Categoria do Ensino Médio',
+        CASE 
+          WHEN tipo_em = 'NULL' THEN 'Não respondeu'
+          ELSE tipo_em END AS 'Tipo do Ensino Médio',
+        CASE 
+          WHEN sexo = 'NULL' THEN 'Não respondeu'
+          ELSE sexo END AS 'Gênero',
+        CASE 
+          WHEN raca = 'NULL' THEN 'Não respondeu'
+          ELSE raca END AS 'Raça',
+        CASE 
+          WHEN cotista = 'NULL' THEN 'Não respondeu'
+          ELSE cotista END AS 'Cotas',
+        CASE 
+          WHEN trabalha = 'NULL' THEN 'Não respondeu'
+          ELSE trabalha END AS 'Horas Trabalhadas',
+        CASE 
+          WHEN qtd_livros = 'NULL' THEN 'Não respondeu'
+          ELSE qtd_livros END AS 'Quantidade de Livros Lidos',
+        CASE 
+          WHEN horas_estudos = 'NULL' THEN 'Não respondeu'
+          ELSE horas_estudos END AS 'Horas de Estudos',
+        CASE 
+          WHEN estado_civil = 'NULL' THEN 'Não respondeu'
+          ELSE estado_civil END AS 'Estado Civil',
+        CASE 
+          WHEN tipo_moradia = 'NULL' THEN 'Não respondeu'
+          ELSE tipo_moradia END AS 'Tipo de Moradia',
+        CASE 
+          WHEN qtd_moradores = 'NULL' THEN 'Não respondeu'
+          ELSE qtd_moradores END AS 'Quantidade de Moradores',
+        CASE 
+          WHEN escolaridade_pai = 'NULL' THEN 'Não respondeu'
+          ELSE escolaridade_pai END AS 'Escolaridade do Pai',
+        CASE 
+          WHEN escolaridade_mae = 'NULL' THEN 'Não respondeu'
+          ELSE escolaridade_mae END AS 'Escolaridade da Mãe',
+        CASE 
+          WHEN dsc_turno = 'NULL' THEN 'Não respondeu'
+          ELSE dsc_turno END AS 'Turno'
+        FROM curso_notas 
+        WHERE 1=1`;
     }
   
     // Adicionando filtros à consulta
@@ -350,12 +411,12 @@ app.get('/notas/download', async (req, res) => {
   });
 
 app.get('/notas/download/csv', async (req, res) => {
-  const { cod_ies, cat_adm, municipio, regiao, uf, grp, ano, presenca } = req.query;
+  const { cod_ies, cat_adm, municipio, regiao, uf, grp, ano, presenca, all } = req.query;
 
   let query = '';
   const params = [];
 
-  if (ano === '2022' || ano === '2021') {
+  if (all === 'não') {
     query = `SELECT 
               ano AS Ano,
               cod_ies AS 'Codigo da IES',
@@ -380,7 +441,68 @@ app.get('/notas/download/csv', async (req, res) => {
               FROM curso_notas 
               WHERE 1=1`;
   } else {
-    query = 'SELECT * FROM curso_notas WHERE 1=1';
+      query = `SELECT 
+      ano AS Ano,
+      cod_ies AS 'Codigo da IES',
+      dsc_cat_adm AS 'Categoria Administrativa',
+      cod_curso AS 'Codigo do Curso',
+      dsc_municipio AS 'Municipio',
+      dsc_regiao AS 'Regiao',
+      dsc_uf AS 'UF',
+      cod_grupo AS 'Codigo do Grupo',
+      dsc_grupo AS 'Curso',
+      dsc_tipo_presenca AS 'Tipo de Presenca',
+      nota_geral AS 'Nota Geral',
+      CASE 
+        WHEN plano_ensino = 'NULL' THEN 'Não respondeu'
+        ELSE plano_ensino END AS 'Plano de Ensino',
+      CASE 
+        WHEN cond_sala = 'NULL' THEN 'Não respondeu'
+        ELSE cond_sala END AS 'Condicao da Sala',
+      CASE 
+        WHEN cat_em = 'NULL' THEN 'Não respondeu'
+        ELSE cat_em END AS 'Categoria do Ensino Médio',
+      CASE 
+        WHEN tipo_em = 'NULL' THEN 'Não respondeu'
+        ELSE tipo_em END AS 'Tipo do Ensino Médio',
+      CASE 
+        WHEN sexo = 'NULL' THEN 'Não respondeu'
+        ELSE sexo END AS 'Gênero',
+      CASE 
+        WHEN raca = 'NULL' THEN 'Não respondeu'
+        ELSE raca END AS 'Raça',
+      CASE 
+        WHEN cotista = 'NULL' THEN 'Não respondeu'
+        ELSE cotista END AS 'Cotas',
+      CASE 
+        WHEN trabalha = 'NULL' THEN 'Não respondeu'
+        ELSE trabalha END AS 'Horas Trabalhadas',
+      CASE 
+        WHEN qtd_livros = 'NULL' THEN 'Não respondeu'
+        ELSE qtd_livros END AS 'Quantidade de Livros Lidos',
+      CASE 
+        WHEN horas_estudos = 'NULL' THEN 'Não respondeu'
+        ELSE horas_estudos END AS 'Horas de Estudos',
+      CASE 
+        WHEN estado_civil = 'NULL' THEN 'Não respondeu'
+        ELSE estado_civil END AS 'Estado Civil',
+      CASE 
+        WHEN tipo_moradia = 'NULL' THEN 'Não respondeu'
+        ELSE tipo_moradia END AS 'Tipo de Moradia',
+      CASE 
+        WHEN qtd_moradores = 'NULL' THEN 'Não respondeu'
+        ELSE qtd_moradores END AS 'Quantidade de Moradores',
+      CASE 
+        WHEN escolaridade_pai = 'NULL' THEN 'Não respondeu'
+        ELSE escolaridade_pai END AS 'Escolaridade do Pai',
+      CASE 
+        WHEN escolaridade_mae = 'NULL' THEN 'Não respondeu'
+        ELSE escolaridade_mae END AS 'Escolaridade da Mãe',
+      CASE 
+        WHEN dsc_turno = 'NULL' THEN 'Não respondeu'
+        ELSE dsc_turno END AS 'Turno'
+      FROM curso_notas 
+      WHERE 1=1`;
   }
 
   // Adicionando os filtros à consulta
@@ -443,12 +565,12 @@ app.get('/notas/download/csv', async (req, res) => {
 
 
 app.get('/notas/download/pdf', async (req, res) => {
-  const { cod_ies, cat_adm, municipio, regiao, uf, grp, ano, presenca } = req.query;
+  const { cod_ies, cat_adm, municipio, regiao, uf, grp, ano, presenca, all } = req.query;
 
   let query = '';
   const params = [];
 
-  if (ano === '2022' || ano === '2021') {
+  if (ano === '2022' && all === 'não') {
     query = `SELECT 
               ano AS Ano,
               cod_ies AS 'Código da IES',
@@ -547,14 +669,14 @@ app.get('/notas/download/pdf', async (req, res) => {
 // ENDPOINT TABLE
 app.get('/notas', async (req, res) => {
   // Pegando os parâmetros de filtro da query string
-  const { cod_ies, cat_adm, municipio, regiao, uf, grp, ano, presenca } = req.query;
+  const { cod_ies, cat_adm, municipio, regiao, uf, grp, ano, presenca, all } = req.query;
 
     // Inicia a consulta SQL
     let query = '';
     const params = [];
 
     // Condições específicas para o ano
-    if (ano === '2022' || ano === '2021') {
+    if (ano === '2022' && all === 'não') {
       // Query para 2021 e 2022
       query = `SELECT 
                 ano AS Ano,
@@ -581,7 +703,68 @@ app.get('/notas', async (req, res) => {
                 WHERE 1=1`;
     } else {
         // Query para outros anos
-        query = 'SELECT * FROM curso_notas WHERE 1=1';
+        query = `SELECT 
+        ano AS Ano,
+        cod_ies AS 'Codigo da IES',
+        dsc_cat_adm AS 'Categoria Administrativa',
+        cod_curso AS 'Codigo do Curso',
+        dsc_municipio AS 'Municipio',
+        dsc_regiao AS 'Regiao',
+        dsc_uf AS 'UF',
+        cod_grupo AS 'Codigo do Grupo',
+        dsc_grupo AS 'Curso',
+        dsc_tipo_presenca AS 'Tipo de Presenca',
+        nota_geral AS 'Nota Geral',
+        CASE 
+          WHEN plano_ensino = 'NULL' THEN 'Não respondeu'
+          ELSE plano_ensino END AS 'Plano de Ensino',
+        CASE 
+          WHEN cond_sala = 'NULL' THEN 'Não respondeu'
+          ELSE cond_sala END AS 'Condicao da Sala',
+        CASE 
+          WHEN cat_em = 'NULL' THEN 'Não respondeu'
+          ELSE cat_em END AS 'Categoria do Ensino Médio',
+        CASE 
+          WHEN tipo_em = 'NULL' THEN 'Não respondeu'
+          ELSE tipo_em END AS 'Tipo do Ensino Médio',
+        CASE 
+          WHEN sexo = 'NULL' THEN 'Não respondeu'
+          ELSE sexo END AS 'Gênero',
+        CASE 
+          WHEN raca = 'NULL' THEN 'Não respondeu'
+          ELSE raca END AS 'Raça',
+        CASE 
+          WHEN cotista = 'NULL' THEN 'Não respondeu'
+          ELSE cotista END AS 'Cotas',
+        CASE 
+          WHEN trabalha = 'NULL' THEN 'Não respondeu'
+          ELSE trabalha END AS 'Horas Trabalhadas',
+        CASE 
+          WHEN qtd_livros = 'NULL' THEN 'Não respondeu'
+          ELSE qtd_livros END AS 'Quantidade de Livros Lidos',
+        CASE 
+          WHEN horas_estudos = 'NULL' THEN 'Não respondeu'
+          ELSE horas_estudos END AS 'Horas de Estudos',
+        CASE 
+          WHEN estado_civil = 'NULL' THEN 'Não respondeu'
+          ELSE estado_civil END AS 'Estado Civil',
+        CASE 
+          WHEN tipo_moradia = 'NULL' THEN 'Não respondeu'
+          ELSE tipo_moradia END AS 'Tipo de Moradia',
+        CASE 
+          WHEN qtd_moradores = 'NULL' THEN 'Não respondeu'
+          ELSE qtd_moradores END AS 'Quantidade de Moradores',
+        CASE 
+          WHEN escolaridade_pai = 'NULL' THEN 'Não respondeu'
+          ELSE escolaridade_pai END AS 'Escolaridade do Pai',
+        CASE 
+          WHEN escolaridade_mae = 'NULL' THEN 'Não respondeu'
+          ELSE escolaridade_mae END AS 'Escolaridade da Mãe',
+        CASE 
+          WHEN dsc_turno = 'NULL' THEN 'Não respondeu'
+          ELSE dsc_turno END AS 'Turno'
+        FROM curso_notas 
+        WHERE 1=1`;
     }
 
   // Adicionando filtros à consulta
